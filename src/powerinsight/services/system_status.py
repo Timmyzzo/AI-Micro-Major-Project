@@ -8,6 +8,7 @@ import torch
 
 from powerinsight.config import AppSettings
 from powerinsight.data.catalog import build_dataset_id, compute_sha256
+from powerinsight.forecasting.registry import list_registered_models
 from powerinsight.paths import ProjectPaths, display_path
 from powerinsight.persistence.database import database_health
 from powerinsight.schemas import DatasetManifest, SystemStatus
@@ -48,11 +49,18 @@ def collect_system_status(settings: AppSettings, paths: ProjectPaths) -> SystemS
             data_status = "原始 CSV 可用，尚未处理"
     else:
         data_status = "原始 CSV 缺失"
-    model_status = (
-        f"已配置模型 ID {settings.model_id}，尚未验证权重"
-        if settings.model_id
-        else "尚未训练或注册模型"
-    )
+    registered_models = list_registered_models(paths.root / "models" / "registry")
+    default_model = next((model for model in registered_models if model.is_default), None)
+    if default_model is not None:
+        model_status = (
+            f"M4 已注册 {len(registered_models)} 个模型；默认 {default_model.display_name}"
+        )
+    elif registered_models:
+        model_status = f"M4 已注册 {len(registered_models)} 个模型；尚无默认模型"
+    elif settings.model_id:
+        model_status = f"已配置模型 ID {settings.model_id}，尚未验证权重"
+    else:
+        model_status = "尚未训练或注册模型"
     if settings.llm_configured:
         llm_status = "已启用并完成配置，尚未发起连接测试"
     elif settings.llm_enabled:

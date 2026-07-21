@@ -11,6 +11,7 @@ from app.components.layout import (
     render_status_panel,
 )
 from powerinsight.services.data_service import DataService
+from powerinsight.services.forecast_service import ForecastService
 from powerinsight.services.runtime import RuntimeContext
 
 
@@ -26,14 +27,14 @@ context = _get_context()
 status = context.status
 data_state = DataService(context).inspect_builtin_state()
 data_ready = data_state.manifest is not None and data_state.processed_exists
+forecast_availability = ForecastService(context).inspect_availability()
+forecast_ready = forecast_availability.status == "ready"
 
 render_page_header(
     eyebrow="PowerInsight · 系统总览",
     title="当前状态，一目了然",
-    description=(
-        "聚焦已经验证的 M2 数据闭环、M3 确定性分析、运行环境和下一步路径，不提前展示模型结果。"
-    ),
-    badge="M3 已验证",
+    description="聚焦已验证的 M2 数据、M3 历史分析、M4 模型闭环和仍未实现的后续边界。",
+    badge="M4 已验证" if forecast_ready else "M3 已验证",
 )
 
 if data_ready and data_state.manifest is not None:
@@ -78,16 +79,34 @@ model_col, environment_col = st.columns((1.05, 1), gap="large")
 with model_col:
     render_section_heading(
         title="模型与智能能力",
-        description="数据基础已经形成，但模型、预警、优化和报告仍处于明确的计划状态。",
+        description="预测只在模型产物兼容时可用；预警、优化和智能报告仍保持计划状态。",
     )
-    render_status_panel(
-        tone="planned",
-        label="模型状态",
-        title="尚未训练任何模型",
-        description="当前没有 Ridge、LSTM、PatchTST、预测区间或测试指标，页面加载也不会触发训练。",
-        evidence=(status.model_status, "无预测结果", "无模型指标"),
-        next_step="按固定时间切分进入 M4 模型训练与评估；M3 页面不会生成预测。",
-    )
+    if forecast_ready:
+        default_model = next(
+            (model for model in forecast_availability.models if model.is_default),
+            forecast_availability.models[0],
+        )
+        render_status_panel(
+            tone="success",
+            label="模型状态",
+            title="M4 真实模型闭环可用",
+            description="已完成同窗口基线对比、验证集选模、固定测试评估和分步 90% 共形区间。",
+            evidence=(
+                status.model_status,
+                f"默认 {default_model.display_name}",
+                f"测试 MAE {default_model.test_mae:.4f} kW",
+            ),
+            next_step="前往负荷预测选择固定测试起点，运行即时推理或加载离线缓存。",
+        )
+    else:
+        render_status_panel(
+            tone="planned",
+            label="模型状态",
+            title="尚未训练任何模型",
+            description="当前没有兼容模型、预测区间或测试指标，页面加载也不会触发训练。",
+            evidence=(status.model_status, "无预测结果", "无模型指标"),
+            next_step="按固定时间切分进入 M4 模型训练与评估；M3 页面不会生成预测。",
+        )
 
 with environment_col:
     render_section_heading(
@@ -112,7 +131,13 @@ render_fact_list(
     (
         ("已完成 · M2", "数据校验、缺失治理、15 分钟聚合、固定切分、manifest 与元数据登记"),
         ("已完成 · M3", "确定性 KPI、历史趋势、周期规律、分项结构与本地证据摘要"),
-        ("后续 · M4/M5", "训练与评估模型，再接入预测、残差预警、情景模拟和证据报告"),
+        (
+            "已完成 · M4" if forecast_ready else "后续 · M4",
+            "模型对比、验证集选模、测试评估、共形区间、缓存和只加载推理页面"
+            if forecast_ready
+            else "训练与评估模型，并接入只加载推理页面",
+        ),
+        ("后续 · M5", "残差预警、模拟回放、优化决策和证据约束智能报告"),
     )
 )
 
@@ -122,6 +147,7 @@ render_status_panel(
     label="用户控制",
     title="耗时操作只由明确动作触发",
     description=(
-        "完整校验和预处理只在数据中心由按钮启动；页面刷新不会训练模型、生成预测或调用外部 API。"
+        "完整校验和预处理只在数据中心由按钮启动；预测只由负荷预测页按钮触发；"
+        "页面刷新不会训练模型或调用外部 API。"
     ),
 )
