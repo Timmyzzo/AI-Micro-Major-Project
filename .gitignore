@@ -25,6 +25,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 Desktop.ini
+~$*.doc
+~$*.docx
 
 # Notebooks
 .ipynb_checkpoints/
@@ -32,6 +34,7 @@ Desktop.ini
 # Runtime logs, databases and temporary uploads
 logs/
 *.log
+*.db
 *.db-journal
 *.db-wal
 *.db-shm
