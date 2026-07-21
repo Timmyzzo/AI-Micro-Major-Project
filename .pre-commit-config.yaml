@@ -1,0 +1,25 @@
+minimum_pre_commit_version: "4.6.0"
+
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run --frozen --extra dev ruff check .
+        language: system
+        pass_filenames: false
+      - id: ruff-format-check
+        name: ruff format check
+        entry: uv run --frozen --extra dev ruff format --check .
+        language: system
+        pass_filenames: false
+      - id: mypy
+        name: mypy
+        entry: uv run --frozen --extra dev mypy src
+        language: system
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        entry: uv run --frozen --extra dev pytest
+        language: system
+        pass_filenames: false

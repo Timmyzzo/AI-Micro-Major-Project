@@ -1,0 +1,1 @@
+"""PowerInsight automated tests."""
