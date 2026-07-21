@@ -30,8 +30,8 @@ def test_data_center_renders_true_empty_state(tmp_path: Path) -> None:
     app.run(timeout=30)
 
     assert not app.exception
-    assert any("尚未运行完整质量校验" in item.value for item in app.info)
-    assert any("尚未生成可用的 15 分钟处理产物" in item.value for item in app.info)
+    assert any("尚未运行完整质量校验" in item.value for item in app.markdown)
+    assert any("尚未生成可用的 15 分钟处理产物" in item.value for item in app.markdown)
 
 
 def test_data_center_renders_completed_manifest_and_split_counts(tmp_path: Path) -> None:
@@ -52,5 +52,6 @@ def test_data_center_renders_completed_manifest_and_split_counts(tmp_path: Path)
     assert "记录数" in labels
     assert "15 分钟点数" in labels
     assert "训练集" in labels
-    assert any("Manifest" in item.value for item in app.markdown)
+    assert any("Manifest 别名" in item.value for item in app.caption)
+    assert any("M2 处理产物可读取" in item.value for item in app.markdown)
     assert app.dataframe

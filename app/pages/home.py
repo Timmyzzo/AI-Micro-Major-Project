@@ -1,9 +1,15 @@
-"""Home page for the current engineering-skeleton milestone."""
+"""Native-style overview of the current verified PowerInsight state."""
 
 from __future__ import annotations
 
 import streamlit as st
 
+from app.components.layout import (
+    render_fact_list,
+    render_page_header,
+    render_section_heading,
+    render_status_panel,
+)
 from powerinsight.services.data_service import DataService
 from powerinsight.services.runtime import RuntimeContext
 
@@ -21,31 +27,101 @@ status = context.status
 data_state = DataService(context).inspect_builtin_state()
 data_ready = data_state.manifest is not None and data_state.processed_exists
 
-st.title("⚡ 智电洞察（PowerInsight）")
-st.caption("电力数据智能分析与可视化系统 · 当前阶段：M2 数据闭环")
-st.warning("尚未训练任何模型；本页只展示真实数据闭环与已验证环境状态。")
-
-data_col, model_col, gpu_col, llm_col, database_col = st.columns(5)
-data_col.metric(
-    "数据",
-    "M2 闭环可用" if data_ready else "原始文件可用" if status.data_file_exists else "原始文件缺失",
+render_page_header(
+    eyebrow="PowerInsight · 系统总览",
+    title="当前状态，一目了然",
+    description=(
+        "聚焦已经验证的 M2 数据闭环、运行环境和下一步路径，不提前展示尚未产生的分析或模型结果。"
+    ),
+    badge="M2 已验证",
 )
-model_col.metric("模型", "尚未训练")
-gpu_col.metric("GPU", "CUDA 可用" if status.cuda_available else "CPU 模式")
-llm_col.metric("LLM", "已配置" if status.llm_configured else "未配置/已禁用")
-database_col.metric("数据库", "可访问" if status.database_accessible else "不可访问")
 
-st.subheader("状态说明")
-st.markdown(
-    "\n".join(
+if data_ready and data_state.manifest is not None:
+    split_counts = data_state.manifest.splits["counts"]
+    render_status_panel(
+        tone="ready",
+        label="核心状态",
+        title="M2 数据闭环可用",
+        description=(
+            "内置 CSV 已建立稳定身份，质量报告、15 分钟聚合、固定月份切分与 manifest 均可读取。"
+        ),
+        evidence=(
+            data_state.manifest.dataset_id,
+            data_state.manifest.preprocess_id,
+            f"15 分钟点数 {sum(split_counts.values()):,}",
+        ),
+        next_step="前往数据中心复核质量证据，或在后续 M3 阶段实现确定性用电分析。",
+    )
+elif data_state.source_exists:
+    render_status_panel(
+        tone="attention",
+        label="核心状态",
+        title="原始数据可用，M2 产物尚未就绪",
+        description="页面只完成了低成本文件身份检查，没有自动执行完整校验或预处理。",
+        evidence=tuple(
+            item for item in (data_state.dataset_id, data_state.source_path_alias) if item
+        ),
+        next_step="在数据中心主动运行完整质量校验，并按需生成 M2 处理产物。",
+    )
+else:
+    render_status_panel(
+        tone="blocked",
+        label="核心状态",
+        title="内置原始数据缺失",
+        description="后续分析与模型能力都依赖课程提供的只读 CSV，当前不能继续建立数据闭环。",
+        evidence=(data_state.source_path_alias,),
+        next_step="恢复原始 CSV 后重新启动应用；不要用空文件或修改配置绕过校验。",
+    )
+
+st.write("")
+model_col, environment_col = st.columns((1.05, 1), gap="large")
+with model_col:
+    render_section_heading(
+        title="模型与智能能力",
+        description="数据基础已经形成，但模型、预警、优化和报告仍处于明确的计划状态。",
+    )
+    render_status_panel(
+        tone="planned",
+        label="模型状态",
+        title="尚未训练任何模型",
+        description="当前没有 Ridge、LSTM、PatchTST、预测区间或测试指标，页面加载也不会触发训练。",
+        evidence=(status.model_status, "无预测结果", "无模型指标"),
+        next_step="先完成 M3 分析闭环，再按固定时间切分进入 M4 模型训练与评估。",
+    )
+
+with environment_col:
+    render_section_heading(
+        title="运行环境",
+        description="只显示非敏感、可核对的本机诊断。",
+    )
+    render_fact_list(
         (
-            f"- **数据：** {'15 分钟数据与 manifest 已生成' if data_ready else status.data_status}",
-            f"- **模型：** {status.model_status}",
-            f"- **GPU：** {status.gpu_name or '未检测到 CUDA 设备'}",
-            f"- **LLM：** {status.llm_status}",
-            f"- **SQLite：** {status.database_status}",
+            ("计算设备", status.gpu_name or "未检测到 CUDA 设备，使用 CPU 降级"),
+            ("CUDA", "可用" if status.cuda_available else "不可用"),
+            ("LLM", status.llm_status),
+            ("SQLite", status.database_status),
         )
+    )
+
+st.write("")
+render_section_heading(
+    title="可预期的下一步",
+    description="每一阶段只在真实实现和验收后改变状态，避免把计划写成结果。",
+)
+render_fact_list(
+    (
+        ("已完成 · M2", "数据校验、缺失治理、15 分钟聚合、固定切分、manifest 与元数据登记"),
+        ("下一阶段 · M3", "实现确定性 KPI、历史趋势、周期规律和分项结构；当前尚未开始"),
+        ("后续 · M4/M5", "训练与评估模型，再接入残差预警、情景模拟和证据报告"),
     )
 )
 
-st.info("完整校验和预处理只在数据中心由按钮触发；页面加载不会训练模型或调用外部 API。")
+st.write("")
+render_status_panel(
+    tone="information",
+    label="用户控制",
+    title="耗时操作只由明确动作触发",
+    description=(
+        "完整校验和预处理只在数据中心由按钮启动；页面刷新不会训练模型、生成预测或调用外部 API。"
+    ),
+)

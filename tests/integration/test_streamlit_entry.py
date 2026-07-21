@@ -35,4 +35,5 @@ def test_streamlit_default_page_executes_without_exception(monkeypatch: object) 
     assert not app.exception
     assert sum("powerinsight-theme" in item.value for item in app.markdown) == 1
     assert any("智电洞察" in item.value for item in app.sidebar.markdown)
-    assert any("尚未训练任何模型" in warning.value for warning in app.warning)
+    assert any("尚未训练任何模型" in item.value for item in app.markdown)
+    assert not app.warning
