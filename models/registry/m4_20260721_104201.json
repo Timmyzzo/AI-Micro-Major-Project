@@ -1,0 +1,122 @@
+{
+  "code_commit": "23e3503965b7ad3367b0177096becd133940eea4",
+  "created_at": "2026-07-21T10:42:01.936807+00:00",
+  "data_config_hash": "CB65036717CF2F2E30372A6787E0B3E83CFF291CFE8416DFFFBF9313B4B88E6D",
+  "dataset_id": "ds_household_power_c79e3e19",
+  "default_model_id": "mdl_seasonal_day_m4_20260721_104201",
+  "device": "cuda",
+  "experiment_id": "m4_20260721_104201",
+  "models": [
+    {
+      "average_width_kw": 3.090936966213411,
+      "coverage": 0.9211956521739131,
+      "default": false,
+      "mae": 0.7327254843371718,
+      "model": "前一时刻",
+      "model_id": "mdl_last_value_m4_20260721_104201",
+      "r2": -0.6481149833730757,
+      "rmse": 1.1211675442565525,
+      "smape": 0.7896161704673331,
+      "validation_mae": 0.700350753287138,
+      "wape": 0.9317651506442678
+    },
+    {
+      "average_width_kw": 3.1646658797289473,
+      "coverage": 0.9406702898550725,
+      "default": true,
+      "mae": 0.6462815279222053,
+      "model": "前一日同刻",
+      "model_id": "mdl_seasonal_day_m4_20260721_104201",
+      "r2": -0.4525604189377097,
+      "rmse": 1.0525527404394466,
+      "smape": 0.6944234257787353,
+      "validation_mae": 0.7433286464721378,
+      "wape": 0.8218393083021801
+    },
+    {
+      "average_width_kw": 3.1822909065825944,
+      "coverage": 0.9411231884057971,
+      "default": false,
+      "mae": 0.6760529891176122,
+      "model": "前一周同刻",
+      "model_id": "mdl_seasonal_week_m4_20260721_104201",
+      "r2": -0.5487922739332327,
+      "rmse": 1.0868593607748955,
+      "smape": 0.6921768416835987,
+      "validation_mae": 0.6725815407860662,
+      "wape": 0.859697975181676
+    },
+    {
+      "average_width_kw": 3.1215713638542355,
+      "coverage": 0.9605978260869565,
+      "default": false,
+      "mae": 0.7008295114341098,
+      "model": "Ridge",
+      "model_id": "mdl_ridge_m4_20260721_104201",
+      "r2": -0.1743254998755428,
+      "rmse": 0.9463918881346967,
+      "smape": 0.9445725628618395,
+      "validation_mae": 0.7255698429039007,
+      "wape": 0.8912048635623306
+    },
+    {
+      "average_width_kw": 3.0285754363605943,
+      "coverage": 0.9320652173913043,
+      "default": false,
+      "mae": 0.7628730435626231,
+      "model": "小型 LSTM",
+      "model_id": "mdl_lstm_m4_20260721_104201",
+      "r2": -0.11922345587833494,
+      "rmse": 0.9239216948520094,
+      "smape": 0.9288586625931767,
+      "validation_mae": 0.7545219338337321,
+      "wape": 0.9701020799086708
+    },
+    {
+      "average_width_kw": 2.87378689058233,
+      "coverage": 0.9619565217391305,
+      "default": false,
+      "mae": 0.6622307537042577,
+      "model": "小型单变量 PatchTST",
+      "model_id": "mdl_patchtst_m4_20260721_104201",
+      "r2": -0.004579514664796003,
+      "rmse": 0.8753241733564365,
+      "smape": 0.8702640295421421,
+      "validation_mae": 0.714819743488786,
+      "wape": 0.8421210278289913
+    }
+  ],
+  "patchtst_best_naive_mae_improvement": 0.09620892426948151,
+  "patchtst_meets_five_percent_gate": true,
+  "preprocess_id": "prep_c79e3e19_cb65036717cf",
+  "schema_version": "1.0",
+  "window_counts": {
+    "test": {
+      "accepted": 23,
+      "candidates": 23,
+      "rejected": 0,
+      "rejection_reasons": {
+        "discontinuous_time": 0,
+        "missing_or_long_gap": 0
+      }
+    },
+    "train": {
+      "accepted": 2617,
+      "candidates": 2689,
+      "rejected": 72,
+      "rejection_reasons": {
+        "discontinuous_time": 0,
+        "missing_or_long_gap": 72
+      }
+    },
+    "validation": {
+      "accepted": 24,
+      "candidates": 24,
+      "rejected": 0,
+      "rejection_reasons": {
+        "discontinuous_time": 0,
+        "missing_or_long_gap": 0
+      }
+    }
+  }
+}

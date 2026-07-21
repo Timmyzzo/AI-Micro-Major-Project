@@ -388,3 +388,16 @@ http://localhost:8501
 - 检查 GPU、端口、网络；
 - 启动演示模式；
 - 不升级、不训练、不清缓存。
+
+## 16. M4 当前运行与演示口径
+
+正式训练只在准备阶段运行：
+
+~~~powershell
+.\.venv\Scripts\python.exe scripts\train_m4.py --device cuda --train-stride 4 --eval-stride 96 --max-epochs 12
+.\.venv\Scripts\python.exe scripts\accept_m4.py
+~~~
+
+现场演示不训练：启动应用后进入“负荷预测”，保留默认的 2007-06-08 起点、“前一日同刻”模型、自动设备和 90% 区间，允许加载离线缓存并点击“运行预测”。页面应明确显示 cached/completed、model_id、run_id、数据身份、测试指标、区间外点和 CSV 下载。
+
+如果权重缺失，朴素默认模型仍无需权重即可推理；如果全部 registry 不兼容，则页面进入 blocked 并保留历史分析。不得临时修改测试数据或模型结论。当前 M5 预警、优化和智能报告仍不可作为已完成演示步骤。

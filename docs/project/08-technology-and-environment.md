@@ -2,7 +2,7 @@
 
 ## 1. 当前状态声明
 
-截至 2026-07-21，M1 工程骨架和 M2 数据闭环已在目标 Windows 电脑上实现并验证：项目使用 uv 管理的 CPython 3.11.14 和 `.venv`，依赖已锁定，CUDA 版 PyTorch、配置、日志、SQLite、Streamlit、数据校验、Parquet 处理和质量门禁均可运行。尚未训练模型、生成模型指标或调用真实 OpenAI 兼容 API。
+截至 2026-07-21，M1 至 M4 已在目标 Windows 电脑上实现并验证：项目使用 uv 管理的 CPython 3.11.14 和 `.venv`，依赖已锁定，CUDA 版 PyTorch、数据闭环、历史分析、六模型训练评估、共形区间、离线缓存和 Streamlit 推理页均可运行。预警、优化和真实 OpenAI 兼容 API 仍未实现。
 
 ## 2. 技术选型总表
 
@@ -302,16 +302,17 @@ M2 已创建并验证：
 .\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\default.yaml
 ~~~
 
-以下训练和发布命令仍是后续里程碑计划，当前脚本尚未创建，不得执行或描述为完成：
+M4 已创建并验证：
 
 ~~~powershell
-python scripts/train_baselines.py --config configs/default.yaml
-python scripts/train_patchtst.py --config configs/default.yaml --model-config configs/model/patchtst_small.yaml
-python scripts/evaluate.py --run-id <run_id>
-python scripts/prepare_demo.py --model-id <model_id>
+.\.venv\Scripts\python.exe scripts\train_m4.py `
+  --config configs\default.yaml `
+  --model-config configs\model\patchtst_small.yaml `
+  --device cuda --train-stride 4 --eval-stride 96 --max-epochs 12
+.\.venv\Scripts\python.exe scripts\accept_m4.py
 ~~~
 
-尖括号内容需要替换为真实 ID。模型训练仍与 Streamlit 页面分离。
+模型训练仍与 Streamlit 页面分离。权重、缩放器和预测缓存不提交 Git；模型卡、指标、共形分位数和配置指纹位于 `models/registry/`。
 
 ## 12. 训练配置档位
 
@@ -433,7 +434,7 @@ M1 已保存或记录：
 - 当前启动、诊断和质量命令；
 - Streamlit 健康检查、依赖检查和自动测试结果。
 
-模型文件指纹、真实训练时间、训练峰值显存、模型指标和推理延迟仍待后续训练与评估阶段实测。
+M4 已归档模型文件 SHA-256、配置指纹、训练时间、峰值模型分配显存、验证/测试指标、区间结果、推理延迟和保存/加载一致性。正式运行中 Ridge 训练 0.090 秒（CPU）；LSTM 3.425 秒、111.64 MiB；PatchTST 11.120 秒、65.57 MiB。专用 8502 浏览器验收结束后端口已释放，原 8501 项目进程未被结束。
 
 ## 18. 变更记录
 
@@ -442,3 +443,4 @@ M1 已保存或记录：
 | v0.1.0 | 2026-07-21 | 建立技术栈、建议版本、Windows/GPU 配置、变量和故障排查方案 |
 | v0.2.0 | 2026-07-21 | 回填 Python 3.11.14、锁定依赖、CUDA 13.0、RTX 4060 和 M1 环境验收结果 |
 | v0.3.0 | 2026-07-21 | 回填 M2 数据脚本、处理配置和完整 CSV 验收状态 |
+| v0.4.0 | 2026-07-21 | 回填 M4 正式训练命令、GPU/CPU 实测、模型产物和浏览器验收 |

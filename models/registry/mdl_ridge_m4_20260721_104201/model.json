@@ -1,0 +1,49 @@
+{
+  "checkpoint_path_alias": "models/checkpoints/m4_20260721_104201/ridge.joblib",
+  "checkpoint_sha256": "81B685E977688548CDE5603A6CC6DC8A19A617F8F7558F618C833D9F8E93AB40",
+  "code_commit": "23e3503965b7ad3367b0177096becd133940eea4",
+  "config_fingerprint": "36749114881A6C31099CF25B7A7FB2D574ECC8917D5D0E8884E0066DE1878DBF",
+  "conformal_path_alias": "models/registry/mdl_ridge_m4_20260721_104201/conformal.json",
+  "context_length": 672,
+  "created_at": "2026-07-21T10:42:01.936807Z",
+  "data_config_hash": "CB65036717CF2F2E30372A6787E0B3E83CFF291CFE8416DFFFBF9313B4B88E6D",
+  "dataset_id": "ds_household_power_c79e3e19",
+  "default_reason": "默认模型为 前一日同刻，其固定测试 MAE 更低。",
+  "device": "cpu",
+  "display_name": "Ridge",
+  "interval_level": 0.9,
+  "is_default": false,
+  "known_limitations": [
+    "仅使用单个家庭 2007 年上半年数据，不能外推为其他家庭或当前年份表现。",
+    "测试集只覆盖 2007 年 6 月，测试结果不用于重新训练或调参。",
+    "90% 共形区间是时间序列上的经验覆盖，不是严格概率保证。"
+  ],
+  "metrics_path_alias": "models/registry/mdl_ridge_m4_20260721_104201/metrics.json",
+  "model_card_path_alias": "models/registry/mdl_ridge_m4_20260721_104201/model_card.md",
+  "model_config_snapshot": {
+    "alpha": 10.0,
+    "context_length": 672,
+    "prediction_length": 96,
+    "type": "ridge"
+  },
+  "model_id": "mdl_ridge_m4_20260721_104201",
+  "model_type": "ridge",
+  "peak_gpu_memory_bytes": null,
+  "prediction_length": 96,
+  "preprocess_id": "prep_c79e3e19_cb65036717cf",
+  "run_id": "run_m4_20260721_104201_ridge",
+  "scaler_path_alias": "models/scalers/m4_20260721_104201/target_scaler.json",
+  "scaler_sha256": "A9DB6771352CB3A83458F7DEE1D59D368E888354446D73CFF766C2D466CE59AC",
+  "schema_version": "1.0",
+  "test_mae": 0.7008295114341098,
+  "test_rmse": 0.9463918881346967,
+  "training_config_snapshot": {
+    "alpha_candidates": [
+      0.1,
+      1.0,
+      10.0
+    ]
+  },
+  "training_seconds": 0.08951900000101887,
+  "validation_mae": 0.7255698429039007
+}

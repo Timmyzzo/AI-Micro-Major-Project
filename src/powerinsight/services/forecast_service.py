@@ -214,11 +214,15 @@ class ForecastService:
             return self._load_cache(cache_json, model)
 
         context_frame, future_frame = self._load_window(model.preprocess_id, normalized_start)
-        scaler = self._load_scaler(model)
         raw_context = (
             context_frame["global_active_power_kw"].to_numpy(dtype=np.float32).reshape(1, -1)
         )
-        scaled_context = scaler.transform(raw_context)
+        scaler = (
+            None
+            if model.model_type in {"last_value", "seasonal_day", "seasonal_week"}
+            else self._load_scaler(model)
+        )
+        scaled_context = raw_context if scaler is None else scaler.transform(raw_context)
         actual_device = self._resolve_device(model, requested_device)
         started = time.perf_counter()
         prediction = self._predict_model(model, raw_context, scaled_context, scaler, actual_device)
@@ -452,7 +456,7 @@ class ForecastService:
         model: RegisteredModel,
         raw_context: np.ndarray,
         scaled_context: np.ndarray,
-        scaler: TargetScaler,
+        scaler: TargetScaler | None,
         device: torch.device,
     ) -> np.ndarray:
         if model.model_type in {"last_value", "seasonal_day", "seasonal_week"}:
@@ -462,6 +466,8 @@ class ForecastService:
                 prediction_length=model.prediction_length,
             )[0]
             return np.asarray(prediction, dtype=np.float32)
+        if scaler is None:
+            raise self._artifact_error(model, "MODEL_SCALER_MISSING", "可训练模型没有缩放器")
         if model.checkpoint_path_alias is None or model.checkpoint_sha256 is None:
             raise self._artifact_error(model, "MODEL_CHECKPOINT_MISSING", "模型权重路径未注册")
         checkpoint = self._resolve_alias(model.checkpoint_path_alias)

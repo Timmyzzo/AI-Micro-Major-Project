@@ -33,9 +33,10 @@ def test_forecast_availability_lists_compatible_default_and_origins(tmp_path: Pa
     assert availability.origins[0] == datetime(2007, 6, 8)
 
 
-def test_forecast_runs_then_reuses_offline_cache(tmp_path: Path) -> None:
+def test_naive_forecast_runs_without_scaler_then_reuses_offline_cache(tmp_path: Path) -> None:
     context = make_runtime_context(tmp_path)
     model = prepare_forecast_fixture(context)
+    (context.paths.root / model.scaler_path_alias).unlink()
     service = ForecastService(context)
     start = service.inspect_availability().origins[0]
 
@@ -92,7 +93,7 @@ def test_forecast_rejects_unlisted_start(tmp_path: Path) -> None:
     assert captured.value.code == "FCST_INSUFFICIENT_HISTORY"
 
 
-def test_forecast_rejects_tampered_scaler_hash(tmp_path: Path) -> None:
+def test_scaler_loader_rejects_tampered_hash(tmp_path: Path) -> None:
     context = make_runtime_context(tmp_path)
     model = prepare_forecast_fixture(context)
     scaler_path = context.paths.root / model.scaler_path_alias
@@ -100,12 +101,7 @@ def test_forecast_rejects_tampered_scaler_hash(tmp_path: Path) -> None:
     service = ForecastService(context)
 
     with pytest.raises(ForecastError) as captured:
-        service.predict(
-            model_id=model.model_id,
-            forecast_start=service.inspect_availability().origins[0],
-            requested_device="cpu",
-            allow_cache=False,
-        )
+        service._load_scaler(model)
     assert captured.value.code == "MODEL_SCALER_MISMATCH"
 
 
