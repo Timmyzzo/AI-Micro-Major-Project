@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 IssueSeverity = Literal["error", "warning", "information"]
 QualityStatus = Literal["usable", "attention", "blocked"]
@@ -119,6 +119,13 @@ class PreprocessConfig(BaseModel):
     train_end: datetime
     validation_end: datetime
     test_end: datetime
+
+    @model_validator(mode="after")
+    def validate_split_boundaries(self) -> PreprocessConfig:
+        """Require strictly increasing fixed time split boundaries."""
+        if not self.train_end < self.validation_end < self.test_end:
+            raise ValueError("split boundaries must be strictly increasing")
+        return self
 
 
 class ProcessedDatasetRecord(BaseModel):
