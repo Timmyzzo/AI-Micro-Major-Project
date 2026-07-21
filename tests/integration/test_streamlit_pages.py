@@ -24,7 +24,7 @@ PAGE_NAMES = (
     "reports",
     "settings",
 )
-PLANNED_PAGE_NAMES = ("alerts", "optimization", "reports")
+PLANNED_PAGE_NAMES = ("optimization", "reports")
 
 
 @pytest.fixture(scope="module")

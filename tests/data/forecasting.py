@@ -33,17 +33,32 @@ def prepare_forecast_fixture(context: RuntimeContext) -> RegisteredModel:
     config_hash = "A" * 64
     processed_dir = context.paths.data_dir / "processed" / preprocess_id
     processed_dir.mkdir(parents=True, exist_ok=True)
-    periods = 900
-    timestamps = pd.date_range("2007-06-01", periods=periods, freq="15min")
-    values = (1.5 + np.sin(np.arange(periods) * 2 * np.pi / 96)).astype(np.float64)
-    frame = pd.DataFrame(
+    train_periods = 1000
+    test_periods = 900
+    train_timestamps = pd.date_range("2007-01-01", periods=train_periods, freq="15min")
+    test_timestamps = pd.date_range("2007-06-01", periods=test_periods, freq="15min")
+    train_values = (1.5 + np.sin(np.arange(train_periods) * 2 * np.pi / 96)).astype(np.float64)
+    test_values = (1.5 + np.sin(np.arange(test_periods) * 2 * np.pi / 96)).astype(np.float64)
+    train_frame = pd.DataFrame(
         {
-            "timestamp": timestamps,
-            "global_active_power_kw": values,
+            "timestamp": train_timestamps,
+            "global_active_power_kw": train_values,
+            "long_gap": False,
+            "split": "train",
+        }
+    )
+    test_frame = pd.DataFrame(
+        {
+            "timestamp": test_timestamps,
+            "global_active_power_kw": test_values,
             "long_gap": False,
             "split": "test",
         }
     )
+    frame = pd.concat((train_frame, test_frame), ignore_index=True)
+    periods = len(frame)
+    timestamps = frame["timestamp"]
+    values = frame["global_active_power_kw"].to_numpy()
     frame.to_parquet(processed_dir / "power_15min.parquet", index=False)
     report = DataQualityReport(
         dataset_id=dataset_id,
@@ -72,8 +87,8 @@ def prepare_forecast_fixture(context: RuntimeContext) -> RegisteredModel:
             size_bytes=context.paths.builtin_csv.stat().st_size,
             row_count=periods,
             field_count=4,
-            start_time=timestamps[0].to_pydatetime(),
-            end_time=timestamps[-1].to_pydatetime(),
+            start_time=pd.Timestamp(timestamps.iloc[0]).to_pydatetime(),
+            end_time=pd.Timestamp(timestamps.iloc[-1]).to_pydatetime(),
             cadence="15min",
             status="validated",
             created_at=datetime.now(UTC),
@@ -89,13 +104,13 @@ def prepare_forecast_fixture(context: RuntimeContext) -> RegisteredModel:
         source_sha256=source_hash,
         source_rows=periods,
         source_fields=4,
-        start_time=timestamps[0].to_pydatetime(),
-        end_time=timestamps[-1].to_pydatetime(),
+        start_time=pd.Timestamp(timestamps.iloc[0]).to_pydatetime(),
+        end_time=pd.Timestamp(timestamps.iloc[-1]).to_pydatetime(),
         cadence={"raw": "15min", "processed": "15min"},
         columns={},
         missing_summary={},
         preprocessing={},
-        splits={"counts": {"train": 0, "validation": 0, "test": periods}},
+        splits={"counts": {"train": train_periods, "validation": 0, "test": test_periods}},
         artifacts={"processed": f"data/processed/{preprocess_id}/power_15min.parquet"},
         quality_report=report,
         created_at=datetime.now(UTC),

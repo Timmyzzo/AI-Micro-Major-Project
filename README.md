@@ -2,7 +2,7 @@
 
 > 项目展示名：智电洞察（PowerInsight）
 > 基础实验：实验 6《家庭用电数据集的探索》
-> 当前阶段：M2 数据闭环、M2.5 前端体验、M3 确定性分析与 M4 模型闭环已实现并验证
+> 当前阶段：M2 至 M4 已验证；M5 已完成回放与三类确定性预警子闭环
 > 文档基线版本：v0.6.0（2026-07-21）
 > GitHub 仓库：[Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)
 
@@ -21,14 +21,17 @@
 | Python 与依赖 | Python 3.11.14 项目环境已验证；`pyproject.toml` + `uv.lock` 为权威依赖入口 |
 | 应用界面 | Streamlit 八页导航、集中式主题、共享布局/状态组件、Material Symbols 导航和非敏感诊断已实现 |
 | SQLite | schema v1 已复用；实际登记 1 个数据集和 1 个已完成预处理运行，不保存原始或聚合时序 |
-| 自动化质量 | Ruff、格式、mypy、pip check 和 119 项 pytest 已通过；最终 pre-commit 结果见测试文档 |
+| 自动化质量 | Ruff、格式、mypy、pip check 和 126 项 pytest 已通过；最终 pre-commit 结果见测试文档 |
 | 数据预处理产物 | 已在本地生成分钟 Parquet、15 分钟 Parquet 和 manifest；均为 `.gitignore` 保护的可再生产物，不提交 Git |
 | M3 历史分析 | 已使用真实 15 分钟 Parquet 完成全范围只读验收；结果见下文与测试文档 |
 | 模型训练与评估结果 | M4 已完成 6 模型真实训练/评估、分步 90% 共形区间、模型注册和离线预测缓存 |
+| M5 监测预警 | 已完成 96 点历史回测回放、质量/规则/残差三类确定性预警与 CSV 导出；优化和报告仍待实现 |
 | 系统截图与课程报告结果章节 | 待实现后补充 |
 | Git 仓库 | [Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)，默认分支 main |
 
 不得把文档中的“计划值”“预估值”描述成已经实测的系统结果。后续实现和训练产生的真实版本号、耗时、显存、指标和截图，应回填到相应文档及课程报告。
+
+M5 预警只读验收使用默认模型 `mdl_seasonal_day_m4_20260721_104201` 与起点 `2007-06-08 00:00`：同一 96 点回测片段生成 4 条数据质量、6 条稳健规则和 13 条残差预警，共 23 条；单次载入缓存预测并完成三类评估耗时 0.1317 秒。该耗时是一次功能验收记录，不作为多次性能统计。
 
 ### M2.5 前端体验重构
 
