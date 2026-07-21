@@ -16,10 +16,10 @@
 | 历史回放与三类预警 | 已完成并验证 |
 | 本地模板建议 | 已实现 |
 | 可选大模型 API 简短建议 | 已实现代码与 mock 测试；真实调用取决于用户配置 |
-| 最终课程截图、Word/PDF 报告 | 尚未完成 |
+| 最终课程截图、Word/PDF 报告 | 已完成并逐页验证 |
 
 项目不再建设任意 CSV 上传、字段映射、多数据集管理、优化调度平台、完整智能报告系统、HTML 报告或 REST API。
-当前完整自动化回归为 128 项 pytest，Ruff、格式、mypy、pip check 和七页 AppTest 均通过。
+当前完整自动化回归为 128 项 pytest，Ruff、格式、mypy、pip check、pre-commit 和七页 AppTest 均通过。
 
 ## 七个页面
 
@@ -50,8 +50,11 @@
 - PatchTST 测试 MAE：0.6622 kW
 - PatchTST 相对 Last Value MAE 改善：9.62%
 - 预警验收：质量 4 条、规则 6 条、残差 13 条，共 23 条
+- 七页浏览器验收：1920×1080 全部通过；等效 125% 缩放无横向溢出
+- 课程报告：15 页 A4 Word/PDF，目录、正文页码、7 张最终截图和 7 个表格已验证
 
 复杂模型没有在测试集上超过前一日同刻基线；项目保留这一负结果，不修改测试集或夸大结论。
+最终验收环境未安全配置大模型 API，因此真实 API 调用按规则跳过；本地模板和 mock 回退测试均通过。
 
 ## 启动
 
@@ -101,7 +104,9 @@ OPENAI_TIMEOUT_SECONDS=30
 
 ## 文档
 
-项目基线见 [docs/project/README.md](docs/project/README.md)。最终尚需完成课程截图、Word/PDF 报告和现场演示复核。
+项目基线见 [docs/project/README.md](docs/project/README.md)。最终课程截图位于
+`docs/课程提交报告/screenshots/`，Word/PDF 位于 `docs/课程提交报告/`。
+提交前只需填写封面个人信息、按实际修改小组分工，并进行现场演示复核。
 
 ## Git 规则
 
