@@ -2,8 +2,8 @@
 
 > 项目展示名：智电洞察（PowerInsight）
 > 基础实验：实验 6《家庭用电数据集的探索》
-> 当前阶段：M2 数据闭环与 M2.5 全局前端体验重构已实现并验证；M3 分析和后续模型业务尚未开始
-> 文档基线版本：v0.4.0（2026-07-21）
+> 当前阶段：M2 数据闭环、M2.5 全局前端体验重构与 M3 确定性用电分析已实现并验证；模型业务尚未开始
+> 文档基线版本：v0.5.0（2026-07-21）
 > GitHub 仓库：[Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)
 
 本项目面向《电力人工智能综合实训》，基于家庭分钟级用电数据，设计一个集数据接入、数据质量检查、用电监测、负荷预测、异常预警、用能分析、优化模拟和大模型解释于一体的本地可视化系统。项目以“技术有新意、结果可验证、工作量可控制、现场展示稳定”为核心原则。
@@ -12,7 +12,7 @@
 
 ## 1. 当前仓库状态
 
-当前仓库已完成可启动工程骨架、M2 数据闭环和独立的 M2.5 前端体验重构：内置 CSV 可被真实校验，短/长缺失按规则处理，数据聚合为 15 分钟并按固定月份切分，Parquet 与 manifest 可重复生成，SQLite 登记轻量元数据，八个 Streamlit 页面使用集中式设计 token、统一状态语言和可访问性降级。模型业务仍处于计划状态。
+当前仓库已完成可启动工程骨架、M2 数据闭环、独立的 M2.5 前端体验重构和 M3 确定性用电分析：内置 CSV 可被真实校验，短/长缺失按规则处理，数据聚合为 15 分钟并按固定月份切分；用电分析服务只读必要 Parquet 列，计算真实 KPI、趋势、周期、分项、覆盖率与本地证据摘要；SQLite 仍只登记轻量元数据。模型业务仍处于计划状态。
 
 | 项目 | 当前状态 |
 | --- | --- |
@@ -21,8 +21,9 @@
 | Python 与依赖 | Python 3.11.14 项目环境已验证；`pyproject.toml` + `uv.lock` 为权威依赖入口 |
 | 应用界面 | Streamlit 八页导航、集中式主题、共享布局/状态组件、Material Symbols 导航和非敏感诊断已实现 |
 | SQLite | schema v1 已复用；实际登记 1 个数据集和 1 个已完成预处理运行，不保存原始或聚合时序 |
-| 自动化质量 | Ruff、格式、mypy、pip check 和 76 项 pytest 已通过；最终 pre-commit 结果见测试文档 |
+| 自动化质量 | Ruff、格式、mypy、pip check 和 94 项 pytest 已通过；最终 pre-commit 结果见测试文档 |
 | 数据预处理产物 | 已在本地生成分钟 Parquet、15 分钟 Parquet 和 manifest；均为 `.gitignore` 保护的可再生产物，不提交 Git |
+| M3 历史分析 | 已使用真实 15 分钟 Parquet 完成全范围只读验收；结果见下文与测试文档 |
 | 模型训练与评估结果 | 未执行 |
 | 系统截图与课程报告结果章节 | 待实现后补充 |
 | Git 仓库 | [Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)，默认分支 main |
@@ -44,11 +45,25 @@
 
 真实无头 Chrome 已逐页检查 1920×1080，并抽查 1366×768、浅色/深色、sidebar 折叠以及 125%/150% 缩放等效 CSS 视口。Chrome 可自动模拟 reduced motion；reduced transparency 和 increased contrast 的 CSS 合约已自动测试，但仍需在支持相应系统媒体查询的桌面环境中人工切换复核。
 
+### M3 确定性用电分析
+
+M3 没有训练模型、生成预测、调用外部 API 或改变 M2 数据身份。实际实现包括：
+
+- `powerinsight.analytics` 提供无 Streamlit 依赖的纯分析函数，明确处理半开时间区间、NaN、覆盖率、KPI、周期、分项和确定性摘要。
+- `AnalyticsService` 校验 manifest、`preprocess_id`、15 分钟频率、Parquet 列与行数，只读取 10 个必要列；进程内缓存同时包含路径、处理身份和修改时间。
+- 用电分析页默认展示最近 30 个完整日，提供日期范围、8 个指标/范围事实、5 个 Plotly 图、分项核对表和 ready、attention、empty、blocked、failed 状态。
+- 功率使用 kW，累计和分项电量使用既有 Wh 字段求和后转换为 kWh；未知值不显示为 0，长缺失不连接。
+- M2 manifest 中 11 条负未分项分钟原值继续作为质量证据保留，因此不生成可能误导的分项占比。
+- 趋势超过 `ui.max_chart_points` 时确定性采样，并保留有效/缺失状态切换边界。
+
+对当前完整处理产物的只读实测：2007-01-01 至 2007-06-30 共 17,376 个理论和实际 15 分钟点，17,127 个有效负荷点，覆盖率 98.567%；累计有功电量 4,988.285 kWh，平均有功功率 1.165 kW，峰值 8.231 kW（2007-02-22 21:00），最低有效功率 0.084 kW（2007-06-20 03:15）。全范围包含长缺失并保留 11 条负未分项质量证据，状态为 attention；图表实际限制为 10,000 点。
+
 ### 已验证的本地启动方式
 
 ~~~powershell
 uv sync --extra dev --frozen
 .\.venv\Scripts\python.exe scripts\check_environment.py
+.\.venv\Scripts\python.exe scripts\accept_m3.py
 .\.venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
 ~~~
 
@@ -118,14 +133,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start_powerinsight.p
 | --- | --- |
 | 首页总览 | 数据范围、当前负荷、峰值、用电量、异常数、未来峰值 |
 | 数据中心 | 导入、字段映射、质量检查、缺失区间、预处理摘要 |
-| 用电分析 | 趋势、日历热力图、小时与星期规律、分项构成、相关性 |
+| 用电分析 | 已实现真实 KPI、总有功功率趋势、小时/星期/工作日周末规律、分项构成和确定性摘要；热力图、相关性与典型日仍待后续补充 |
 | 负荷预测 | 基线与 PatchTST 对比、未来 24 小时、预测区间、指标 |
 | 监测预警 | 模拟回放、异常时间线、等级、触发规则、处置状态 |
 | 优化决策 | 峰谷电价、负荷转移情景、峰值与费用变化、建议 |
 | 智能报告 | 一键生成有证据的大模型报告，并支持 Markdown 导出 |
 | 系统设置 | 模型、设备、API、阈值、隐私和诊断设置 |
 
-当前只有首页、数据中心和系统设置具备与 M1/M2 相称的真实状态展示；其余五页已完成 M2.5 计划态体验，但表中业务能力仍需在 M3 至 M5 实现。
+当前首页、数据中心、用电分析和系统设置具备真实状态展示；负荷预测、监测预警、优化决策和智能报告四页继续保持诚实计划状态。
 
 具体页面字段、交互、状态和视觉规范见[功能与界面规格](docs/project/03-feature-and-ui-specification.md)。
 

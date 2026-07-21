@@ -381,6 +381,29 @@ power_factor_approx =
 - split；
 - quality_flag。
 
+### 16.3 M3 分析读取与计算口径
+
+M3 只读取现有 `data/processed/{preprocess_id}/power_15min.parquet`，不重新解析原始 260,640 行 CSV。默认必要列为：
+
+- `timestamp`；
+- `global_active_power_kw`；
+- `global_active_energy_wh`；
+- `sub_metering_1_wh`、`sub_metering_2_wh`、`sub_metering_3_wh`；
+- `unmetered_energy_wh`；
+- `missing_ratio`、`imputed_ratio`、`long_gap`。
+
+查询日期两端均包含；内部使用 `[开始日 00:00, 结束日次日 00:00)`，时间保持数据集本地朴素时间。理论点数按 15 分钟间隔计算，覆盖率为有效 `global_active_power_kw` 点数除以理论点数，缺失点数为理论点数减有效负荷点数。Parquet 中存在但总功率为 NaN 的桶仍属于“实际存在点”，不会被显示成 0。
+
+KPI 口径：
+
+- 平均、峰值和最低有效功率直接使用有效 `global_active_power_kw`，单位 kW；
+- 累计有功电量直接求和 `global_active_energy_wh` 并除以 1000 转为 kWh；
+- 三个分项和未分项直接求和既有 Wh 能量字段并转为 kWh；
+- 不使用“15 分钟平均功率 × 错误时长”替代能量字段；
+- 无有效值时返回未知，不返回 0。
+
+M2 manifest 记录的 11 条负未分项分钟原值继续进入 M3 质量说明。由于 15 分钟求和可能掩盖分钟级负值，M3 不通过聚合后为正推断这些原值不存在；当前存在该证据时不计算分项占比。长缺失通过 `long_gap` 触发 attention，趋势图以 NaN 断线。
+
 ## 17. 上传 CSV 最小契约
 
 最低必需信息：
@@ -426,3 +449,4 @@ power_factor_approx =
 | --- | --- | --- |
 | v0.1.0 | 2026-07-21 | 基于实际 CSV 建立数据卡、单位、缺失、处理、切分和防泄漏规范 |
 | v0.2.0 | 2026-07-21 | 回填 M2 程序化校验、缺失处理、聚合切分和产物实测结果 |
+| v0.3.0 | 2026-07-21 | 增加 M3 只读列、时间范围、覆盖率、功率、电量和负未分项分析口径 |
