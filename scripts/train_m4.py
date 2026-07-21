@@ -35,6 +35,7 @@ from powerinsight.forecasting.models import (
     predict_torch,
     save_model,
     select_and_fit_ridge,
+    set_reproducible_seed,
     train_torch_model,
 )
 from powerinsight.forecasting.registry import (
@@ -237,6 +238,7 @@ def main() -> None:
         "num_layers": 1,
         "dropout": 0.0,
     }
+    set_reproducible_seed(training_config.seed)
     lstm = LSTMForecaster(
         prediction_length=prediction_length,
         hidden_size=int(lstm_config["hidden_size"]),
@@ -270,6 +272,7 @@ def main() -> None:
     if device.type == "cuda":
         torch.cuda.empty_cache()
 
+    set_reproducible_seed(training_config.seed)
     patchtst = build_patchtst(patch_config)
     patch_result = train_torch_model(
         patchtst,
