@@ -159,3 +159,106 @@ def _finish_preprocess_run(
                 raise ValueError(f"preprocess run is not registered: {preprocess_id}")
     finally:
         connection.close()
+
+
+def register_model_run(
+    database_path: Path,
+    *,
+    run_id: str,
+    model_id: str,
+    preprocess_id: str,
+    model_type: str,
+    config_hash: str,
+    device: str,
+    best_epoch: int | None,
+    metrics: dict[str, object],
+    artifact_path_alias: str,
+    started_at: datetime,
+    completed_at: datetime,
+) -> None:
+    """Register one completed M4 model without changing SQLite schema v1."""
+    initialize_database(database_path)
+    connection = connect_database(database_path)
+    try:
+        with connection:
+            connection.execute(
+                """
+                INSERT INTO model_runs(
+                    run_id, model_id, preprocess_id, model_type, config_hash, device,
+                    status, best_epoch, metrics_json, artifact_path_alias, started_at, completed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, 'completed', ?, ?, ?, ?, ?)
+                ON CONFLICT(run_id) DO UPDATE SET
+                    model_id = excluded.model_id,
+                    preprocess_id = excluded.preprocess_id,
+                    model_type = excluded.model_type,
+                    config_hash = excluded.config_hash,
+                    device = excluded.device,
+                    status = 'completed',
+                    best_epoch = excluded.best_epoch,
+                    metrics_json = excluded.metrics_json,
+                    artifact_path_alias = excluded.artifact_path_alias,
+                    started_at = excluded.started_at,
+                    completed_at = excluded.completed_at
+                """,
+                (
+                    run_id,
+                    model_id,
+                    preprocess_id,
+                    model_type,
+                    config_hash,
+                    device,
+                    best_epoch,
+                    json.dumps(metrics, ensure_ascii=False, sort_keys=True),
+                    artifact_path_alias,
+                    started_at.isoformat(),
+                    completed_at.isoformat(),
+                ),
+            )
+    finally:
+        connection.close()
+
+
+def register_forecast(
+    database_path: Path,
+    *,
+    forecast_id: str,
+    dataset_id: str,
+    model_id: str,
+    forecast_start: datetime,
+    request_hash: str,
+    status: str,
+    artifact_path_alias: str,
+    latency_ms: float,
+    created_at: datetime,
+) -> None:
+    """Upsert one lightweight forecast cache record in existing schema v1."""
+    initialize_database(database_path)
+    connection = connect_database(database_path)
+    try:
+        with connection:
+            connection.execute(
+                """
+                INSERT INTO forecasts(
+                    forecast_id, dataset_id, model_id, forecast_start, request_hash,
+                    status, artifact_path_alias, latency_ms, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(forecast_id) DO UPDATE SET
+                    status = excluded.status,
+                    artifact_path_alias = excluded.artifact_path_alias,
+                    latency_ms = excluded.latency_ms,
+                    created_at = excluded.created_at
+                """,
+                (
+                    forecast_id,
+                    dataset_id,
+                    model_id,
+                    forecast_start.isoformat(),
+                    request_hash,
+                    status,
+                    artifact_path_alias,
+                    latency_ms,
+                    created_at.isoformat(),
+                ),
+            )
+    finally:
+        connection.close()
