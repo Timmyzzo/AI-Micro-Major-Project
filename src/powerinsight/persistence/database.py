@@ -146,7 +146,7 @@ def initialize_database(path: Path) -> DatabaseInfo:
     """Create the metadata schema once and safely return its current version."""
     resolved_path = path.resolve()
     resolved_path.parent.mkdir(parents=True, exist_ok=True)
-    connection = _connect(resolved_path)
+    connection = connect_database(resolved_path)
     try:
         connection.execute(
             """
@@ -178,7 +178,7 @@ def database_health(path: Path) -> tuple[bool, str]:
     if not resolved_path.is_file():
         return False, "数据库尚未初始化"
     try:
-        connection = _connect(resolved_path)
+        connection = connect_database(resolved_path)
         try:
             check_row = connection.execute("PRAGMA quick_check").fetchone()
             version_row = connection.execute("SELECT MAX(version) FROM schema_versions").fetchone()
@@ -192,7 +192,8 @@ def database_health(path: Path) -> tuple[bool, str]:
     return (True, f"可访问，schema v{SCHEMA_VERSION}") if is_healthy else (False, "schema 未就绪")
 
 
-def _connect(path: Path) -> sqlite3.Connection:
+def connect_database(path: Path) -> sqlite3.Connection:
+    """Open one SQLite metadata connection with foreign keys enabled."""
     connection = sqlite3.connect(path, timeout=5.0)
     connection.execute("PRAGMA foreign_keys = ON")
     return connection

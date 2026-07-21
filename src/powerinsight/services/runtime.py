@@ -26,12 +26,14 @@ class RuntimeContext:
 def initialize_runtime(
     *,
     profile: str | None = None,
+    config_path: Path | None = None,
     runtime_overrides: Mapping[str, object] | None = None,
     project_root: Path = PROJECT_ROOT,
 ) -> RuntimeContext:
     """Initialize directories, logging, and metadata without training or external API calls."""
     settings = load_settings(
         profile=profile,
+        config_path=config_path,
         runtime_overrides=runtime_overrides,
         project_root=project_root,
     )

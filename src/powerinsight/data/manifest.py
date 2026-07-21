@@ -49,11 +49,13 @@ def write_preprocess_artifacts(
     config: PreprocessConfig,
     *,
     data_dir: Path,
+    data_dir_alias: str = "data",
 ) -> tuple[ProcessedDatasetRecord, DatasetManifest]:
     """Atomically write stable M2 artifacts and return their non-sensitive metadata."""
-    minute_alias = f"data/interim/{result.preprocess_id}/minute.parquet"
-    processed_alias = f"data/processed/{result.preprocess_id}/power_15min.parquet"
-    manifest_alias = f"data/manifests/{validation.dataset.dataset_id}.json"
+    alias_root = data_dir_alias.rstrip("/")
+    minute_alias = f"{alias_root}/interim/{result.preprocess_id}/minute.parquet"
+    processed_alias = f"{alias_root}/processed/{result.preprocess_id}/power_15min.parquet"
+    manifest_alias = f"{alias_root}/manifests/{validation.dataset.dataset_id}.json"
     minute_path = data_dir / "interim" / result.preprocess_id / "minute.parquet"
     processed_path = data_dir / "processed" / result.preprocess_id / "power_15min.parquet"
     manifest_path = data_dir / "manifests" / f"{validation.dataset.dataset_id}.json"
@@ -111,6 +113,7 @@ def build_manifest(
         source_path_alias=validation.dataset.path_alias,
         source_sha256=validation.dataset.sha256,
         source_rows=validation.dataset.row_count,
+        source_fields=validation.dataset.field_count,
         start_time=validation.dataset.start_time,
         end_time=validation.dataset.end_time,
         cadence={

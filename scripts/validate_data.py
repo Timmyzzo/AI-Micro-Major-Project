@@ -7,9 +7,8 @@ import json
 from collections.abc import Sequence
 from pathlib import Path
 
-from powerinsight.config import ConfigurationError, load_settings
+from powerinsight.config import load_settings
 from powerinsight.data import BUILTIN_CSV_SHA256, validate_csv
-from powerinsight.data.validation import DataValidationError
 from powerinsight.paths import PROJECT_ROOT, ProjectPaths, display_path
 
 
@@ -29,8 +28,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             raw_cadence=settings.data.raw_cadence,
             short_gap_max_minutes=settings.data.short_gap_max_minutes,
         )
-    except (ConfigurationError, DataValidationError, OSError) as exc:
-        print(json.dumps({"status": "blocked", "error": str(exc)}, ensure_ascii=False))
+    except Exception as exc:
+        safe_error = str(exc).replace(str(PROJECT_ROOT), ".")
+        print(json.dumps({"status": "blocked", "error": safe_error}, ensure_ascii=False))
         return 2
 
     report = result.report

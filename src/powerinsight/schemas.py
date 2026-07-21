@@ -159,6 +159,7 @@ class DatasetManifest(BaseModel):
     source_path_alias: str
     source_sha256: str
     source_rows: int = Field(ge=0)
+    source_fields: int = Field(ge=0)
     start_time: datetime
     end_time: datetime
     cadence: dict[str, str]

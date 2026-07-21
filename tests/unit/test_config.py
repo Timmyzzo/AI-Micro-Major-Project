@@ -104,3 +104,21 @@ def test_yaml_rejects_api_key(tmp_path: Path) -> None:
 def test_invalid_profile_name_is_rejected() -> None:
     with pytest.raises(ConfigurationError, match="Invalid configuration profile name"):
         load_settings(profile="../secret", environment={}, project_root=PROJECT_ROOT)
+
+
+def test_explicit_config_file_is_supported(tmp_path: Path) -> None:
+    config_path = tmp_path / "custom.yaml"
+    config_path.write_text(
+        "app_env: test\ndata:\n  builtin_path: docs/custom.csv\n  short_gap_max_minutes: 30\n",
+        encoding="utf-8",
+    )
+
+    settings = load_settings(
+        config_path=config_path,
+        environment={},
+        project_root=tmp_path,
+    )
+
+    assert settings.data.builtin_path == Path("docs/custom.csv")
+    assert settings.data.short_gap_max_minutes == 30
+    assert settings.config_sources == ("safe defaults", "custom.yaml")

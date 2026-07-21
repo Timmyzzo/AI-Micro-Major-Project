@@ -32,4 +32,4 @@ def test_streamlit_default_page_executes_without_exception(monkeypatch: object) 
     app = AppTest.from_file("app/streamlit_app.py").run(timeout=60)
 
     assert not app.exception
-    assert any("尚未进行数据处理和模型训练" in warning.value for warning in app.warning)
+    assert any("尚未训练任何模型" in warning.value for warning in app.warning)

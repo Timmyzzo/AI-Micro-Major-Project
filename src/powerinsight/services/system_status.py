@@ -7,9 +7,10 @@ import platform
 import torch
 
 from powerinsight.config import AppSettings
-from powerinsight.paths import ProjectPaths
+from powerinsight.data.catalog import build_dataset_id, compute_sha256
+from powerinsight.paths import ProjectPaths, display_path
 from powerinsight.persistence.database import database_health
-from powerinsight.schemas import SystemStatus
+from powerinsight.schemas import DatasetManifest, SystemStatus
 
 
 def collect_system_status(settings: AppSettings, paths: ProjectPaths) -> SystemStatus:
@@ -23,7 +24,30 @@ def collect_system_status(settings: AppSettings, paths: ProjectPaths) -> SystemS
 
     database_accessible, database_status = database_health(paths.database_path)
     data_file_exists = paths.builtin_csv.is_file()
-    data_status = "原始 CSV 可用，尚未处理" if data_file_exists else "原始 CSV 缺失"
+    if data_file_exists:
+        source_alias = display_path(paths.builtin_csv, root=paths.root)
+        source_sha256 = compute_sha256(paths.builtin_csv)
+        dataset_id = build_dataset_id(source_alias, source_sha256)
+        manifest_path = paths.data_dir / "manifests" / f"{dataset_id}.json"
+        if manifest_path.is_file():
+            try:
+                manifest = DatasetManifest.model_validate_json(
+                    manifest_path.read_text(encoding="utf-8")
+                )
+                processed_path = (
+                    paths.data_dir / "processed" / manifest.preprocess_id / "power_15min.parquet"
+                )
+                data_status = (
+                    "M2 数据闭环已生成"
+                    if manifest.source_sha256 == source_sha256 and processed_path.is_file()
+                    else "处理产物不完整或已失效"
+                )
+            except (OSError, ValueError):
+                data_status = "manifest 不可读取，需要重新生成"
+        else:
+            data_status = "原始 CSV 可用，尚未处理"
+    else:
+        data_status = "原始 CSV 缺失"
     model_status = (
         f"已配置模型 ID {settings.model_id}，尚未验证权重"
         if settings.model_id
