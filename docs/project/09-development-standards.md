@@ -78,6 +78,16 @@
 
 简单私有函数无需冗长文档，但命名应自解释。
 
+### 3.6 环境与依赖
+
+- 项目解释器固定为 CPython 3.11.14，`.venv` 只用于本项目且不提交；
+- `pyproject.toml` 声明项目元数据、精确直接依赖和质量工具配置；
+- `uv.lock` 是完整权威锁文件，`requirements.txt` 与 `requirements-dev.txt` 只由 `uv export` 生成；
+- PyTorch 只从 `pytorch-cu130` 显式官方索引解析，不混用多个 torch 来源；
+- 安装和同步统一使用 `uv sync --extra dev --frozen`；
+- 直接导入的第三方包必须列为直接依赖，不能只依赖偶然存在的传递依赖；
+- 依赖改变后必须重新运行 `uv lock --check`、`pip check`、导入检查和完整质量门禁。
+
 ## 4. 模块边界
 
 ### 4.1 页面层
@@ -298,6 +308,19 @@
 
 详细矩阵见[测试与验收方案](10-test-and-acceptance.md)。
 
+当前 M1 统一门禁：
+
+~~~powershell
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m ruff format --check .
+.\.venv\Scripts\python.exe -m mypy src
+.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -m pre_commit run --all-files
+~~~
+
+`.pre-commit-config.yaml` 使用本地 hooks，并通过锁定的 uv 环境执行同一组命令，避免 hooks 与手工命令使用不同解释器。
+
 ## 14. Git 工作流
 
 ### 14.1 当前状态
@@ -408,3 +431,4 @@
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
 | v0.1.0 | 2026-07-21 | 建立 Python、数据、模型、LLM、UI、测试、Git 和安全规范 |
+| v0.2.0 | 2026-07-21 | 固化 uv 锁定环境、PyTorch 官方索引、M1 质量命令和本地 pre-commit 门禁 |

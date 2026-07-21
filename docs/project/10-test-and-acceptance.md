@@ -78,13 +78,15 @@
 
 ## 5. 静态质量门禁
 
-实现阶段计划命令：
+M1 已启用并验证以下命令：
 
 ~~~powershell
-python -m ruff check .
-python -m ruff format --check .
-python -m mypy src
-python -m pytest
+.\.venv\Scripts\python.exe -m ruff check .
+.\.venv\Scripts\python.exe -m ruff format --check .
+.\.venv\Scripts\python.exe -m mypy src
+.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pip check
+.\.venv\Scripts\python.exe -m pre_commit run --all-files
 ~~~
 
 附加检查：
@@ -383,10 +385,26 @@ model_id：
 
 ## 20. 当前测试状态
 
-当前只有文档和数据盘点，没有可运行代码，所有自动化、模型和 UI 测试均为“未执行”。本轮不应填写通过状态。
+截至 2026-07-21，M1 工程骨架测试状态如下：
+
+| 检查 | 实际结果 |
+| --- | --- |
+| pytest | 32 项通过，耗时 12.21 秒 |
+| Ruff | `ruff check .` 通过 |
+| 格式 | `ruff format --check .` 通过，34 个 Python 文件已格式化 |
+| mypy | `mypy src` 通过，检查 10 个源码文件 |
+| pre-commit | Ruff、格式、mypy、pytest 四个本地 hook 全部通过 |
+| pip | `pip check` 报告无损坏依赖；`uv lock --check` 通过 |
+| 环境诊断 | 30 项通过，退出码 0；含关键导入、CUDA 张量、SQLite、CSV 哈希和目录可写性 |
+| Streamlit | 无头健康端点返回 HTTP 200 / `ok`，测试结束后端口已释放 |
+| Streamlit AppTest | 默认入口和首页执行无异常 |
+| 安全 | 配置与日志假密钥测试通过；API Key 不序列化、不回显、不入 SQLite |
+
+上述结果只证明环境与工程骨架。以下仍为“未执行”或“尚未实现”：完整 CSV 数据质量计算、预处理与切分、任何模型训练/评估、预测区间、预警、优化、真实 LLM 连接、性能目标和 1920×1080 人工 UI 验收。不得把 M1 测试通过写成完整 MVP 验收通过。
 
 ## 21. 变更记录
 
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
 | v0.1.0 | 2026-07-21 | 建立测试层级、用例、模型与性能门禁、降级和验收脚本 |
+| v0.2.0 | 2026-07-21 | 回填 M1 的 32 项自动测试、30 项环境检查、静态门禁和 Streamlit 启动结果 |

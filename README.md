@@ -2,8 +2,8 @@
 
 > 项目展示名：智电洞察（PowerInsight）
 > 基础实验：实验 6《家庭用电数据集的探索》
-> 当前阶段：文档设计完成，业务代码、环境安装和模型训练尚未开始
-> 文档基线版本：v0.1.0（2026-07-21）
+> 当前阶段：M1 工程骨架已实现并验证；数据处理和模型训练尚未开始
+> 文档基线版本：v0.2.0（2026-07-21）
 > GitHub 仓库：[Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)
 
 本项目面向《电力人工智能综合实训》，基于家庭分钟级用电数据，设计一个集数据接入、数据质量检查、用电监测、负荷预测、异常预警、用能分析、优化模拟和大模型解释于一体的本地可视化系统。项目以“技术有新意、结果可验证、工作量可控制、现场展示稳定”为核心原则。
@@ -12,20 +12,32 @@
 
 ## 1. 当前仓库状态
 
-当前仓库只包含原始实验资料、课程报告模板、数据集和本轮形成的项目文档，没有可运行应用。
+当前仓库已完成可启动工程骨架、项目隔离环境、依赖锁定、配置、日志、SQLite 元数据和 Streamlit 导航；数据与模型业务仍处于计划状态。
 
 | 项目 | 当前状态 |
 | --- | --- |
 | 需求、功能、架构、数据、模型设计 | 已形成文档基线 |
 | 开发规范、环境方案、测试与验收方案 | 已形成文档基线 |
-| 前端与业务代码 | 未开始 |
-| 依赖文件与虚拟环境 | 未创建 |
+| Python 与依赖 | Python 3.11.14 项目环境已验证；`pyproject.toml` + `uv.lock` 为权威依赖入口 |
+| 应用骨架 | Streamlit 八页导航、配置、路径、脱敏日志和系统诊断已实现 |
+| SQLite | schema v1 元数据空表已实现并验证幂等初始化；未导入原始时序 |
+| 自动化质量 | Ruff、格式、mypy、pre-commit 和 32 项 pytest 已通过 |
 | 数据预处理产物 | 未生成 |
 | 模型训练与评估结果 | 未执行 |
 | 系统截图与课程报告结果章节 | 待实现后补充 |
 | Git 仓库 | [Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)，默认分支 main |
 
 不得把文档中的“计划值”“预估值”描述成已经实测的系统结果。后续实现和训练产生的真实版本号、耗时、显存、指标和截图，应回填到相应文档及课程报告。
+
+### 已验证的本地启动方式
+
+~~~powershell
+uv sync --extra dev --frozen
+.\.venv\Scripts\python.exe scripts\check_environment.py
+.\.venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
+~~~
+
+首次建立环境时，`uv` 会按 `.python-version` 获取 CPython 3.11.14。应用默认禁用 LLM，不需要 API Key 即可启动；当前页面只展示真实环境状态和未实现说明，不会自动处理数据、训练模型或调用外部 API。
 
 ## 2. 已有材料
 
