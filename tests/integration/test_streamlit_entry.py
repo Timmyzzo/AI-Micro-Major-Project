@@ -23,6 +23,7 @@ def test_streamlit_entry_imports_with_all_planned_pages() -> None:
         "智能报告",
         "系统设置",
     )
+    assert all(spec[2].startswith(":material/") for spec in module.PAGE_SPECS)
 
 
 def test_streamlit_default_page_executes_without_exception(monkeypatch: object) -> None:
@@ -32,4 +33,6 @@ def test_streamlit_default_page_executes_without_exception(monkeypatch: object) 
     app = AppTest.from_file("app/streamlit_app.py").run(timeout=60)
 
     assert not app.exception
+    assert sum("powerinsight-theme" in item.value for item in app.markdown) == 1
+    assert any("智电洞察" in item.value for item in app.sidebar.markdown)
     assert any("尚未训练任何模型" in warning.value for warning in app.warning)
