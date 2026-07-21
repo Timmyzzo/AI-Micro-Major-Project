@@ -11,6 +11,7 @@ IssueSeverity = Literal["error", "warning", "information"]
 QualityStatus = Literal["usable", "attention", "blocked"]
 DatasetStatus = Literal["registered", "validated", "invalid"]
 RunStatus = Literal["running", "completed", "failed"]
+AnalyticsStatus = Literal["ready", "attention", "empty"]
 
 
 class SystemStatus(BaseModel):
@@ -171,3 +172,57 @@ class DatasetManifest(BaseModel):
     quality_report: DataQualityReport
     created_at: datetime
     software_versions: dict[str, str]
+
+
+class AnalyticsRangeSummary(BaseModel):
+    """Time-range and coverage facts for one deterministic M3 query."""
+
+    model_config = ConfigDict(frozen=True)
+
+    preprocess_id: str
+    requested_start: datetime
+    requested_end_exclusive: datetime
+    actual_start: datetime | None
+    actual_end: datetime | None
+    expected_points: int = Field(ge=0)
+    actual_points: int = Field(ge=0)
+    valid_load_points: int = Field(ge=0)
+    missing_points: int = Field(ge=0)
+    coverage_ratio: float = Field(ge=0.0, le=1.0)
+
+
+class AnalyticsKpis(BaseModel):
+    """Physical M3 indicators with power and energy kept distinct."""
+
+    model_config = ConfigDict(frozen=True)
+
+    total_active_energy_kwh: float | None
+    average_active_power_kw: float | None
+    peak_active_power_kw: float | None
+    peak_time: datetime | None
+    minimum_active_power_kw: float | None
+    minimum_time: datetime | None
+    coverage_ratio: float = Field(ge=0.0, le=1.0)
+
+
+class SubmeterComponent(BaseModel):
+    """One auditable component of the selected-range energy balance."""
+
+    model_config = ConfigDict(frozen=True)
+
+    key: Literal["sub_metering_1", "sub_metering_2", "sub_metering_3", "unmetered"]
+    label: str
+    energy_kwh: float | None
+    share_ratio: float | None
+
+
+class SubmeterBreakdown(BaseModel):
+    """Selected-range submeter totals and share availability evidence."""
+
+    model_config = ConfigDict(frozen=True)
+
+    total_active_energy_kwh: float | None
+    components: tuple[SubmeterComponent, ...]
+    negative_unmetered_records: int = Field(ge=0)
+    shares_available: bool
+    note: str
