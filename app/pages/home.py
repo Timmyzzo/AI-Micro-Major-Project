@@ -33,7 +33,7 @@ forecast_ready = forecast_availability.status == "ready"
 render_page_header(
     eyebrow="PowerInsight · 系统总览",
     title="当前状态，一目了然",
-    description="聚焦已验证的 M2 数据、M3 历史分析、M4 模型闭环和仍未实现的后续边界。",
+    description="聚焦已验证的数据、分析、预测和预警；剩余范围已收缩为一个可选 API 建议入口。",
     badge="M4 已验证" if forecast_ready else "M3 已验证",
 )
 
@@ -79,7 +79,7 @@ model_col, environment_col = st.columns((1.05, 1), gap="large")
 with model_col:
     render_section_heading(
         title="模型与智能能力",
-        description="预测只在模型产物兼容时可用；预警、优化和智能报告仍保持计划状态。",
+        description="预测和预警使用确定性结果；大模型只在用户点击后生成简短文字建议。",
     )
     if forecast_ready:
         default_model = next(
@@ -137,7 +137,8 @@ render_fact_list(
             if forecast_ready
             else "训练与评估模型，并接入只加载推理页面",
         ),
-        ("后续 · M5", "残差预警、模拟回放、优化决策和证据约束智能报告"),
+        ("已完成 · M5 核心", "历史回放、三类确定性预警和 CSV 导出"),
+        ("精简收尾", "一个可选的大模型 API 简短建议入口；不建设优化平台或完整报告系统"),
     )
 )
 
@@ -148,6 +149,6 @@ render_status_panel(
     title="耗时操作只由明确动作触发",
     description=(
         "完整校验和预处理只在数据中心由按钮启动；预测只由负荷预测页按钮触发；"
-        "页面刷新不会训练模型或调用外部 API。"
+        "页面刷新不会训练模型或调用外部 API；API 只由智能建议页按钮触发。"
     ),
 )

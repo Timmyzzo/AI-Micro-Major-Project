@@ -62,11 +62,11 @@ def collect_system_status(settings: AppSettings, paths: ProjectPaths) -> SystemS
     else:
         model_status = "尚未训练或注册模型"
     if settings.llm_configured:
-        llm_status = "已启用并完成配置，尚未发起连接测试"
+        llm_status = "已配置；只在智能建议页点击后调用"
     elif settings.llm_enabled:
         llm_status = "已启用但配置不完整"
     else:
-        llm_status = "未启用；应用使用无密钥模式"
+        llm_status = "未启用；智能建议使用本地模板"
 
     return SystemStatus(
         python_version=platform.python_version(),

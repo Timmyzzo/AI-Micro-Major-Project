@@ -18,8 +18,7 @@ PAGE_SPECS: tuple[tuple[str, str, str], ...] = (
     ("analytics.py", "用电分析", ":material/query_stats:"),
     ("forecasting.py", "负荷预测", ":material/online_prediction:"),
     ("alerts.py", "监测预警", ":material/notifications_active:"),
-    ("optimization.py", "优化决策", ":material/tune:"),
-    ("reports.py", "智能报告", ":material/description:"),
+    ("reports.py", "智能建议", ":material/auto_awesome:"),
     ("settings.py", "系统设置", ":material/settings:"),
 )
 

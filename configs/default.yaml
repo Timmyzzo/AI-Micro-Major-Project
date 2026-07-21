@@ -8,9 +8,7 @@ model_id: null
 llm_enabled: false
 openai_base_url: null
 openai_model: null
-openai_api_style: auto
 openai_timeout_seconds: 30
-openai_max_retries: 1
 streamlit_server_port: 8501
 
 data:

@@ -91,10 +91,10 @@ st.write("")
 render_status_panel(
     tone="disabled",
     label="安全边界",
-    title="秘密与外部调用保持关闭",
+    title="秘密不回显，外部调用必须主动触发",
     description=(
-        "页面加载不训练模型、不调用大模型；未配置 API Key 时应用仍可启动，"
-        "Key 也不会回显、写入 YAML、SQLite 或日志。"
+        "页面加载不训练模型、不调用大模型；只有智能建议页按钮可以发起一次请求。"
+        "未配置 API Key 时应用仍可启动，Key 也不会回显、写入 YAML、SQLite 或日志。"
     ),
     evidence=("无 Key 回显", "无页面自动调用", "SQLite 仅元数据"),
 )

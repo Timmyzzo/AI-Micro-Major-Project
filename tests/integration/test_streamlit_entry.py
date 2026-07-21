@@ -9,18 +9,17 @@ from streamlit.testing.v1 import AppTest
 from powerinsight.config import ENVIRONMENT_FIELDS
 
 
-def test_streamlit_entry_imports_with_all_planned_pages() -> None:
+def test_streamlit_entry_imports_with_simplified_pages() -> None:
     module = importlib.import_module("app.streamlit_app")
 
-    assert len(module.PAGE_SPECS) == 8
+    assert len(module.PAGE_SPECS) == 7
     assert tuple(spec[1] for spec in module.PAGE_SPECS) == (
         "首页总览",
         "数据中心",
         "用电分析",
         "负荷预测",
         "监测预警",
-        "优化决策",
-        "智能报告",
+        "智能建议",
         "系统设置",
     )
     assert all(spec[2].startswith(":material/") for spec in module.PAGE_SPECS)

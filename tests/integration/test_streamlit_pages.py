@@ -20,11 +20,9 @@ PAGE_NAMES = (
     "analytics",
     "forecasting",
     "alerts",
-    "optimization",
     "reports",
     "settings",
 )
-PLANNED_PAGE_NAMES = ("optimization", "reports")
 
 
 @pytest.fixture(scope="module")
@@ -49,28 +47,23 @@ def _run_page(page_name: str, context: RuntimeContext) -> AppTest:
     return app.run(timeout=30)
 
 
-def test_all_eight_pages_execute_without_exception(ready_context: RuntimeContext) -> None:
+def test_all_seven_pages_execute_without_exception(ready_context: RuntimeContext) -> None:
     for page_name in PAGE_NAMES:
         app = _run_page(page_name, ready_context)
         assert not app.exception, page_name
 
 
-@pytest.mark.parametrize("page_name", PLANNED_PAGE_NAMES)
-def test_planned_pages_remain_honest_and_side_effect_free(
-    page_name: str,
+def test_advice_page_uses_local_template_without_api_key(
     ready_context: RuntimeContext,
 ) -> None:
-    app = _run_page(page_name, ready_context)
+    app = _run_page("reports", ready_context)
     visible_markup = "\n".join(item.value for item in app.markdown)
 
-    assert "M2 数据基础已经具备" in visible_markup
-    assert "能力边界已定义，功能尚未实现" in visible_markup
-    assert "不自动训练" in visible_markup
-    assert "不调用外部 API" in visible_markup
-    assert "不生成虚假指标" in visible_markup
-    assert not app.metric
+    assert not app.exception
+    assert "未配置大模型 API" in app.info[0].value
+    assert "仅供课程演示" in visible_markup
+    assert len(app.metric) == 4
     assert not app.button
-    assert not app.get("plotly_chart")
 
 
 def test_home_distinguishes_verified_data_from_untrained_models(

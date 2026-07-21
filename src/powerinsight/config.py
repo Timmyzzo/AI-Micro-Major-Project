@@ -20,7 +20,6 @@ from powerinsight.paths import PROJECT_ROOT
 EnvironmentName = Literal["development", "test", "demo"]
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 DeviceName = Literal["auto", "cpu", "cuda"]
-ApiStyle = Literal["auto", "chat_completions", "responses"]
 
 ENVIRONMENT_FIELDS: dict[str, str] = {
     "APP_ENV": "app_env",
@@ -34,9 +33,7 @@ ENVIRONMENT_FIELDS: dict[str, str] = {
     "OPENAI_API_KEY": "openai_api_key",
     "OPENAI_BASE_URL": "openai_base_url",
     "OPENAI_MODEL": "openai_model",
-    "OPENAI_API_STYLE": "openai_api_style",
     "OPENAI_TIMEOUT_SECONDS": "openai_timeout_seconds",
-    "OPENAI_MAX_RETRIES": "openai_max_retries",
     "STREAMLIT_SERVER_PORT": "streamlit_server_port",
 }
 SENSITIVE_CONFIG_KEYS = {"api_key", "authorization", "openai_api_key"}
@@ -94,9 +91,7 @@ class AppSettings(BaseSettings):
     openai_api_key: SecretStr | None = Field(default=None, repr=False, exclude=True)
     openai_base_url: str | None = None
     openai_model: str | None = None
-    openai_api_style: ApiStyle = "auto"
     openai_timeout_seconds: float = Field(default=30.0, gt=0.0, le=300.0)
-    openai_max_retries: int = Field(default=1, ge=0, le=10)
     streamlit_server_port: int = Field(default=8501, ge=1, le=65535)
     data: DataSettings = Field(default_factory=DataSettings)
     forecast: ForecastSettings = Field(default_factory=ForecastSettings)
@@ -163,7 +158,6 @@ class AppSettings(BaseSettings):
             "llm_configured": self.llm_configured,
             "openai_base_url_configured": self.openai_base_url is not None,
             "openai_model": self.openai_model,
-            "openai_api_style": self.openai_api_style,
             "streamlit_server_port": self.streamlit_server_port,
             "config_sources": self.config_sources,
         }
