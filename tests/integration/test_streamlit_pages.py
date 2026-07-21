@@ -24,7 +24,7 @@ PAGE_NAMES = (
     "reports",
     "settings",
 )
-PLANNED_PAGE_NAMES = ("analytics", "forecasting", "alerts", "optimization", "reports")
+PLANNED_PAGE_NAMES = ("forecasting", "alerts", "optimization", "reports")
 
 
 @pytest.fixture(scope="module")
@@ -79,10 +79,27 @@ def test_home_distinguishes_verified_data_from_untrained_models(
     app = _run_page("home", ready_context)
     visible_markup = "\n".join(item.value for item in app.markdown)
 
-    assert "M2 数据闭环可用" in visible_markup
+    assert "M2 数据与 M3 分析基础可用" in visible_markup
+    assert "已完成 · M3" in visible_markup
     assert "尚未训练任何模型" in visible_markup
     assert "无预测结果" in visible_markup
     assert "耗时操作只由明确动作触发" in visible_markup
+
+
+def test_analytics_page_uses_real_fixture_metrics_and_charts(
+    ready_context: RuntimeContext,
+) -> None:
+    app = _run_page("analytics", ready_context)
+    visible_markup = "\n".join(item.value for item in app.markdown)
+
+    assert not app.exception
+    assert "分析完成" in visible_markup
+    assert "没有训练模型，也没有预测未来" in visible_markup
+    assert "累计有功电量" in {metric.label for metric in app.metric}
+    assert "平均有功功率" in {metric.label for metric in app.metric}
+    assert len(app.get("plotly_chart")) == 5
+    assert app.date_input
+    assert app.dataframe
 
 
 def test_settings_groups_diagnostics_without_secret_or_timeseries_echo(

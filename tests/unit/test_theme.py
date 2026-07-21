@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from app.theme import THEME_CSS, THEME_MARKER
+import plotly.graph_objects as go
+from app.theme import THEME_CSS, THEME_MARKER, style_plotly_figure
 
 from powerinsight.paths import PROJECT_ROOT
 
@@ -59,3 +60,11 @@ def test_pages_do_not_define_scattered_style_blocks() -> None:
     for path in page_paths:
         source = path.read_text(encoding="utf-8")
         assert "<style" not in source, path.name
+
+
+def test_plotly_figures_use_shared_transparent_layout() -> None:
+    figure = style_plotly_figure(go.Figure(), title="测试", yaxis_title="kW")
+
+    assert figure.layout.paper_bgcolor == "rgba(0,0,0,0)"
+    assert figure.layout.plot_bgcolor == "rgba(0,0,0,0)"
+    assert figure.layout.yaxis.title.text == "kW"

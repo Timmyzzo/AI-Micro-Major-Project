@@ -31,9 +31,9 @@ render_page_header(
     eyebrow="PowerInsight · 系统总览",
     title="当前状态，一目了然",
     description=(
-        "聚焦已经验证的 M2 数据闭环、运行环境和下一步路径，不提前展示尚未产生的分析或模型结果。"
+        "聚焦已经验证的 M2 数据闭环、M3 确定性分析、运行环境和下一步路径，不提前展示模型结果。"
     ),
-    badge="M2 已验证",
+    badge="M3 已验证",
 )
 
 if data_ready and data_state.manifest is not None:
@@ -41,7 +41,7 @@ if data_ready and data_state.manifest is not None:
     render_status_panel(
         tone="ready",
         label="核心状态",
-        title="M2 数据闭环可用",
+        title="M2 数据与 M3 分析基础可用",
         description=(
             "内置 CSV 已建立稳定身份，质量报告、15 分钟聚合、固定月份切分与 manifest 均可读取。"
         ),
@@ -50,7 +50,7 @@ if data_ready and data_state.manifest is not None:
             data_state.manifest.preprocess_id,
             f"15 分钟点数 {sum(split_counts.values()):,}",
         ),
-        next_step="前往数据中心复核质量证据，或在后续 M3 阶段实现确定性用电分析。",
+        next_step="前往用电分析查看真实历史 KPI、趋势、周期和分项结构。",
     )
 elif data_state.source_exists:
     render_status_panel(
@@ -86,7 +86,7 @@ with model_col:
         title="尚未训练任何模型",
         description="当前没有 Ridge、LSTM、PatchTST、预测区间或测试指标，页面加载也不会触发训练。",
         evidence=(status.model_status, "无预测结果", "无模型指标"),
-        next_step="先完成 M3 分析闭环，再按固定时间切分进入 M4 模型训练与评估。",
+        next_step="按固定时间切分进入 M4 模型训练与评估；M3 页面不会生成预测。",
     )
 
 with environment_col:
@@ -111,8 +111,8 @@ render_section_heading(
 render_fact_list(
     (
         ("已完成 · M2", "数据校验、缺失治理、15 分钟聚合、固定切分、manifest 与元数据登记"),
-        ("下一阶段 · M3", "实现确定性 KPI、历史趋势、周期规律和分项结构；当前尚未开始"),
-        ("后续 · M4/M5", "训练与评估模型，再接入残差预警、情景模拟和证据报告"),
+        ("已完成 · M3", "确定性 KPI、历史趋势、周期规律、分项结构与本地证据摘要"),
+        ("后续 · M4/M5", "训练与评估模型，再接入预测、残差预警、情景模拟和证据报告"),
     )
 )
 

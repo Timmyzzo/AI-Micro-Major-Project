@@ -40,7 +40,7 @@ def main() -> None:
 
     apply_theme()
     st.session_state["runtime_context"] = context
-    render_sidebar_brand(stage="M2.5 · 前端体验重构")
+    render_sidebar_brand(stage="M3 · 确定性用电分析")
     pages = [
         st.Page(
             APP_DIR / "pages" / filename,

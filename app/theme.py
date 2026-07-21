@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import plotly.graph_objects as go
 import streamlit as st
 
 THEME_MARKER = "powerinsight-theme"
@@ -615,3 +616,37 @@ textarea:focus-visible,
 def apply_theme() -> None:
     """Inject the centralized theme exactly once during one app script run."""
     st.markdown(THEME_CSS, unsafe_allow_html=True)
+
+
+def style_plotly_figure(
+    figure: go.Figure,
+    *,
+    title: str,
+    xaxis_title: str | None = None,
+    yaxis_title: str | None = None,
+    height: int = 360,
+) -> go.Figure:
+    """Apply the shared transparent, low-chroma chart presentation."""
+    figure.update_layout(
+        title={"text": title, "x": 0.0, "xanchor": "left"},
+        height=height,
+        margin={"l": 24, "r": 18, "t": 58, "b": 30},
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        hoverlabel={"namelength": -1},
+        legend={"orientation": "h", "y": 1.02, "x": 1, "xanchor": "right"},
+        font={"family": "Segoe UI Variable, Microsoft YaHei UI, sans-serif"},
+    )
+    figure.update_xaxes(
+        title=xaxis_title,
+        showgrid=False,
+        zeroline=False,
+        automargin=True,
+    )
+    figure.update_yaxes(
+        title=yaxis_title,
+        gridcolor="rgba(128,128,128,0.18)",
+        zeroline=False,
+        automargin=True,
+    )
+    return figure
