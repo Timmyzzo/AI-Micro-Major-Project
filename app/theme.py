@@ -68,6 +68,23 @@ THEME_CSS = r"""
   --pi-metric-gap: 0.8rem;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pi-bg: #0f1115;
+    --pi-surface-primary: #171a1f;
+    --pi-surface-secondary: #22262d;
+    --pi-surface-floating: rgba(15, 17, 21, 0.84);
+    --pi-sidebar: rgba(25, 28, 34, 0.94);
+    --pi-text-primary: #f5f5f7;
+    --pi-text-secondary: rgba(245, 245, 247, 0.72);
+    --pi-text-tertiary: rgba(245, 245, 247, 0.54);
+    --pi-divider: rgba(245, 245, 247, 0.13);
+    --pi-border: rgba(245, 245, 247, 0.2);
+    --pi-shadow-small: 0 0.35rem 1rem rgba(0, 0, 0, 0.24);
+    --pi-shadow-medium: 0 1rem 2.8rem rgba(0, 0, 0, 0.32);
+  }
+}
+
 html,
 body,
 [data-testid="stAppViewContainer"] {
@@ -88,7 +105,7 @@ body {
 
 [data-testid="stMainBlockContainer"] {
   max-width: var(--pi-content-max);
-  padding-top: clamp(1.5rem, 2.2vw, 2.5rem);
+  padding-top: clamp(4rem, 4vw, 4.75rem);
   padding-right: clamp(1rem, 3vw, 3rem);
   padding-bottom: 4rem;
   padding-left: clamp(1rem, 3vw, 3rem);
@@ -196,6 +213,17 @@ label,
 [data-testid="stFormSubmitButton"] button:hover {
   border-color: color-mix(in srgb, var(--pi-accent) 58%, var(--pi-border));
   box-shadow: var(--pi-shadow-small);
+}
+
+button[data-testid="stBaseButton-primary"] {
+  border-color: var(--pi-accent) !important;
+  background: var(--pi-accent) !important;
+  color: white !important;
+}
+
+button[data-testid="stBaseButton-primary"]:hover {
+  border-color: color-mix(in srgb, var(--pi-accent) 82%, white 18%) !important;
+  background: color-mix(in srgb, var(--pi-accent) 88%, black 12%) !important;
 }
 
 [data-testid="stButton"] button:active,
@@ -328,7 +356,7 @@ textarea:focus-visible,
 .pi-page-title {
   max-width: 16ch;
   margin: 0;
-  color: var(--pi-text-primary);
+  color: var(--pi-text-primary) !important;
   font-size: var(--pi-type-title);
   font-weight: 720;
   letter-spacing: -0.042em;
@@ -511,7 +539,7 @@ textarea:focus-visible,
 
 @media (max-width: 56rem) {
   [data-testid="stMainBlockContainer"] {
-    padding-top: 1.25rem;
+    padding-top: 4rem;
   }
 
   .pi-page-header-row {
