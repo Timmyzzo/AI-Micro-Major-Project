@@ -54,6 +54,14 @@ uv sync --extra dev --frozen
 
 首次建立环境时，`uv` 会按 `.python-version` 获取 CPython 3.11.14。应用默认禁用 LLM，不需要 API Key 即可启动；完整数据校验和预处理只由数据中心按钮或命令行脚本显式触发，不会在页面刷新时自动执行，也不会训练模型或调用外部 API。
 
+Windows 可直接运行：
+
+~~~powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start_powerinsight.ps1
+~~~
+
+该启动器会复用已运行的本项目服务；若 8501 被其他程序占用，则从 8502–8510 选择空闲端口，不会结束未知进程。启动成功后自动打开默认浏览器。桌面快捷方式可将目标指向此脚本。
+
 ### M2 数据命令
 
 ~~~powershell
