@@ -20,6 +20,7 @@ data:
   target_cadence: 15min
   short_gap_max_minutes: 60
   bucket_min_valid_ratio: 0.8
+  unmetered_negative_tolerance_wh: 1.0e-9
   train_end: 2007-04-30T23:59:59
   validation_end: 2007-05-31T23:59:59
   test_end: 2007-06-30T23:59:59

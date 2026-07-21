@@ -56,6 +56,7 @@ class DataSettings(BaseModel):
     target_cadence: str = "15min"
     short_gap_max_minutes: int = Field(default=60, ge=0)
     bucket_min_valid_ratio: float = Field(default=0.8, gt=0.0, le=1.0)
+    unmetered_negative_tolerance_wh: float = Field(default=1e-9, ge=0.0)
     train_end: datetime = datetime(2007, 4, 30, 23, 59, 59)
     validation_end: datetime = datetime(2007, 5, 31, 23, 59, 59)
     test_end: datetime = datetime(2007, 6, 30, 23, 59, 59)
@@ -171,6 +172,7 @@ class AppSettings(BaseSettings):
 def load_settings(
     *,
     profile: str | None = None,
+    config_path: Path | None = None,
     runtime_overrides: Mapping[str, object] | None = None,
     environment: Mapping[str, str] | None = None,
     project_root: Path = PROJECT_ROOT,
@@ -183,9 +185,16 @@ def load_settings(
     merged: dict[str, Any] = {}
     sources = ["safe defaults"]
 
-    default_path = project_root / "configs" / "default.yaml"
+    default_path = (
+        config_path.resolve()
+        if config_path is not None and config_path.is_absolute()
+        else project_root / (config_path or Path("configs/default.yaml"))
+    )
     merged = _deep_merge(merged, _load_yaml(default_path, required=True))
-    sources.append("configs/default.yaml")
+    try:
+        sources.append(default_path.resolve().relative_to(project_root.resolve()).as_posix())
+    except ValueError:
+        sources.append(f"external:{default_path.name}")
 
     if selected_profile is not None:
         profile_path = project_root / "configs" / f"{selected_profile}.yaml"
