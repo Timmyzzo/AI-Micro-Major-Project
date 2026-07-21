@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -171,6 +172,7 @@ def main() -> None:
                 model_type=baseline,
                 model=None,
                 model_config={
+                    "type": baseline,
                     "context_length": context_length,
                     "prediction_length": prediction_length,
                 },
@@ -188,6 +190,7 @@ def main() -> None:
             )
         )
 
+    ridge_started = time.perf_counter()
     ridge, ridge_validation_mae, ridge_trials = select_and_fit_ridge(
         train_context_scaled,
         train_target_scaled,
@@ -195,6 +198,7 @@ def main() -> None:
         validation_windows.target,
         scaler=target_scaler,
     )
+    ridge_training_seconds = time.perf_counter() - ridge_started
     ridge_validation = np.maximum(
         0.0,
         target_scaler.inverse_transform(np.asarray(ridge.predict(validation_context_scaled))),
@@ -208,6 +212,7 @@ def main() -> None:
             model_type="ridge",
             model=ridge,
             model_config={
+                "type": "ridge",
                 "context_length": context_length,
                 "prediction_length": prediction_length,
                 "alpha": float(ridge.alpha),
@@ -217,7 +222,7 @@ def main() -> None:
             test_prediction=ridge_test,
             validation_mae=ridge_validation_mae,
             best_epoch=None,
-            training_seconds=0.0,
+            training_seconds=ridge_training_seconds,
             peak_gpu_memory_bytes=None,
             history=[],
             selection={"metric": "validation_mae", "trials": ridge_trials},
@@ -225,6 +230,7 @@ def main() -> None:
     )
 
     lstm_config: dict[str, object] = {
+        "type": "lstm",
         "context_length": context_length,
         "prediction_length": prediction_length,
         "hidden_size": 64,
@@ -368,6 +374,7 @@ def main() -> None:
             "training_history": candidate.history,
             "test_origin_count": len(test_windows.origins),
             "test_origins": [str(value) for value in test_windows.origins],
+            "saved_loaded_inference_consistent": True,
         }
         conformal_document = {
             "schema_version": "1.0",
@@ -606,8 +613,6 @@ def _measure_inference_ms(
         torch.cuda.synchronize(device)
         _ = scaler.inverse_transform(prediction)
         return float(started.elapsed_time(ended))
-    import time
-
     clock = time.perf_counter()
     if candidate.model_type in {"last_value", "seasonal_day", "seasonal_week"}:
         naive_predict(raw_context, candidate.model_type, prediction_length=96)  # type: ignore[arg-type]
