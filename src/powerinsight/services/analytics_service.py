@@ -131,6 +131,7 @@ class AnalyticsService:
                 start=start,
                 end_exclusive=end_exclusive,
                 max_chart_points=self._context.settings.ui.max_chart_points,
+                source_negative_unmetered_records=_negative_unmetered_rows(manifest),
             )
         except AnalyticsError:
             raise
@@ -284,3 +285,8 @@ def _as_datetime(value: object) -> datetime | None:
     if pd.isna(value):
         return None
     return cast(datetime, pd.Timestamp(value).to_pydatetime())
+
+
+def _negative_unmetered_rows(manifest: DatasetManifest) -> int:
+    value = manifest.preprocessing.get("negative_unmetered_rows", 0)
+    return value if isinstance(value, int) and value >= 0 else 0

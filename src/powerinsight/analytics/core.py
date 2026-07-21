@@ -50,6 +50,7 @@ def analyze_frame(
     start: datetime,
     end_exclusive: datetime,
     max_chart_points: int,
+    source_negative_unmetered_records: int = 0,
 ) -> AnalyticsResult:
     """Analyze one half-open local-naive interval without modifying the input frame."""
     if start >= end_exclusive:
@@ -82,7 +83,11 @@ def analyze_frame(
     )
 
     kpis = _calculate_kpis(selected, coverage_ratio)
-    submeter = _calculate_submeter_breakdown(selected, kpis.total_active_energy_kwh)
+    submeter = _calculate_submeter_breakdown(
+        selected,
+        kpis.total_active_energy_kwh,
+        source_negative_unmetered_records=source_negative_unmetered_records,
+    )
     has_long_gap = bool(selected["long_gap"].fillna(False).any()) if actual_points else False
     if valid_load_points == 0:
         status: AnalyticsStatus = "empty"
@@ -164,8 +169,11 @@ def _calculate_kpis(frame: pd.DataFrame, coverage_ratio: float) -> AnalyticsKpis
 def _calculate_submeter_breakdown(
     frame: pd.DataFrame,
     total_active_energy_kwh: float | None,
+    *,
+    source_negative_unmetered_records: int,
 ) -> SubmeterBreakdown:
-    negative_count = int(frame["unmetered_energy_wh"].lt(0).fillna(False).sum())
+    aggregated_negative_count = int(frame["unmetered_energy_wh"].lt(0).fillna(False).sum())
+    negative_count = max(aggregated_negative_count, source_negative_unmetered_records)
     totals: list[float | None] = []
     for _, _, column in ENERGY_COLUMNS:
         value = frame[column].sum(min_count=1)
@@ -189,7 +197,7 @@ def _calculate_submeter_breakdown(
         for (key, label, _), value in zip(ENERGY_COLUMNS, totals, strict=True)
     )
     if negative_count:
-        note = "存在负未分项记录，原值已保留；为避免误导，本范围不计算分项占比。"
+        note = "M2 质量记录中存在负未分项原值；为避免误导，本范围不计算分项占比。"
     elif not shares_available:
         note = "总电量或分项总量无效，本范围不计算分项占比。"
     else:
@@ -269,7 +277,7 @@ def _build_evidence(
         items.append("所选范围包含 M2 标记的长缺失，趋势保持断开，结论仅基于有效数据。")
     if submeter.negative_unmetered_records:
         items.append(
-            f"检测到 {submeter.negative_unmetered_records:,} 个负未分项聚合点，"
+            f"M2 质量记录包含 {submeter.negative_unmetered_records:,} 条负未分项原值，"
             "原值保留且未生成占比。"
         )
     items.append("这是本地确定性历史分析，没有训练模型，也没有预测未来。")

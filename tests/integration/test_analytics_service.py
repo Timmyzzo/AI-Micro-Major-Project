@@ -60,6 +60,7 @@ def test_service_reads_only_required_parquet_columns_and_respects_date_bounds(
     assert result.range_summary.actual_start == datetime(2007, 1, 1, 0, 15)
     assert result.range_summary.actual_end == datetime(2007, 1, 1, 0, 45)
     assert context.paths.database_path.stat().st_mtime_ns == database_mtime
+    assert result.submeter.negative_unmetered_records == 0
 
 
 def test_service_blocks_missing_manifest_and_processed_file(tmp_path: Path) -> None:

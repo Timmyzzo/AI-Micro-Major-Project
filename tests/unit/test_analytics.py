@@ -134,13 +134,13 @@ def test_submeter_totals_shares_and_negative_unmetered_evidence() -> None:
         max_chart_points=100,
     )
     negative_frame = _analysis_frame().drop(index=2).copy()
-    negative_frame.loc[0, "unmetered_energy_wh"] = -1.0
     negative = analyze_frame(
         negative_frame,
         preprocess_id="prep_fixture",
         start=datetime(2007, 1, 1),
         end_exclusive=datetime(2007, 1, 1, 2),
         max_chart_points=100,
+        source_negative_unmetered_records=11,
     )
 
     assert normal.submeter.shares_available is True
@@ -150,10 +150,10 @@ def test_submeter_totals_shares_and_negative_unmetered_evidence() -> None:
         1.0,
         abs=1e-6,
     )
-    assert negative.submeter.negative_unmetered_records == 1
+    assert negative.submeter.negative_unmetered_records == 11
     assert negative.submeter.shares_available is False
     assert all(component.share_ratio is None for component in negative.submeter.components)
-    assert "原值已保留" in negative.submeter.note
+    assert "负未分项原值" in negative.submeter.note
 
 
 def test_zero_total_does_not_fabricate_shares() -> None:
