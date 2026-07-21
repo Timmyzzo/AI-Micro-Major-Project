@@ -1,0 +1,22 @@
+model:
+  type: patchtst
+  num_input_channels: 1
+  context_length: 672
+  prediction_length: 96
+  patch_length: 16
+  patch_stride: 8
+  d_model: 64
+  num_attention_heads: 4
+  num_hidden_layers: 3
+  ffn_dim: 128
+  dropout: 0.1
+
+training:
+  seed: 42
+  batch_size: 32
+  max_epochs: 30
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  gradient_clip: 1.0
+  early_stopping_patience: 5
+  mixed_precision: true

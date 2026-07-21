@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *.pyd
 *.so
+*.egg-info/
 .venv/
 venv/
 
@@ -32,7 +33,8 @@ Desktop.ini
 .ipynb_checkpoints/
 
 # Runtime logs, databases and temporary uploads
-logs/
+logs/*
+!logs/README.md
 *.log
 *.db
 *.db-journal
@@ -41,11 +43,35 @@ logs/
 uploads/
 
 # Reproducible data and model artifacts
-data/interim/
-data/processed/
-models/checkpoints/
-models/scalers/
-artifacts/
+data/raw/*
+!data/raw/README.md
+data/interim/*
+!data/interim/README.md
+data/processed/*
+!data/processed/README.md
+data/manifests/*
+!data/manifests/README.md
+models/checkpoints/*
+!models/checkpoints/README.md
+models/scalers/*
+!models/scalers/README.md
+artifacts/*
+!artifacts/README.md
+!artifacts/forecasts/
+!artifacts/reports/
+!artifacts/figures/
+!artifacts/exports/
+!artifacts/demo/
+artifacts/forecasts/*
+!artifacts/forecasts/README.md
+artifacts/reports/*
+!artifacts/reports/README.md
+artifacts/figures/*
+!artifacts/figures/README.md
+artifacts/exports/*
+!artifacts/exports/README.md
+artifacts/demo/*
+!artifacts/demo/README.md
 
 # Common model and cache files
 *.ckpt

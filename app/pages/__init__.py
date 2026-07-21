@@ -1,0 +1,1 @@
+"""PowerInsight Streamlit pages."""

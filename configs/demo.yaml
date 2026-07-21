@@ -1,0 +1,9 @@
+app_env: demo
+app_log_level: WARNING
+device: auto
+llm_enabled: false
+
+ui:
+  language: zh-CN
+  default_theme: dark
+  max_chart_points: 5000
