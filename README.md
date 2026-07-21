@@ -49,6 +49,8 @@ uv sync --extra dev --frozen
 | [小组项目报告模板](docs/课程提交报告/《电力人工智能综合实训》报告模板.doc) | 最终课程项目报告格式依据 |
 | [项目文档中心](docs/project/README.md) | 全部设计文档的统一入口 |
 
+`docs/课程提交报告`（课程提交报告）这个文件夹在项目未完成的情况下无需读取。
+
 经本轮只读盘点，CSV 包含 260,640 条分钟记录，时间范围为 2007-01-01 00:00:00 至 2007-06-30 23:59:00；共有 3,771 行测量值缺失，占 1.4468%，其中最长连续缺失段为 3,723 分钟。数据字段、单位、清洗和切分规则见[数据规格与治理](docs/project/05-data-specification.md)。
 
 ## 3. 项目核心能力
@@ -143,18 +145,7 @@ uv sync --extra dev --frozen
 
 显存占用和训练时长目前均为设计预估，必须在实现阶段实测后记录，不能在报告中伪装成已验证结果。
 
-## 9. 项目边界
-
-本项目是教学和演示系统，不是电网调度、安全保护或计费系统：
-
-- 不接入真实智能电表、PLC、SCADA 或家庭设备控制器。
-- 不自动执行负荷转移，只做情景模拟。
-- 不把数据异常等同于电气故障。
-- 不对人身、电气安全或实际费用作保证。
-- 不把大模型文本当作唯一决策依据。
-- MVP 不引入强化学习；现有数据没有真实控制动作、环境反馈和奖励标签，强行使用会增加工作量且难以验证。
-
-## 10. 版本控制与提交要求
+## 9. 版本控制与提交要求
 
 - 远程仓库：[https://github.com/Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)。
 - main 分支必须保持可启动、可测试或至少与当前项目阶段一致。
@@ -164,8 +155,6 @@ uv sync --extra dev --frozen
 
 详细规则见[项目协作与贡献指南](CONTRIBUTING.md)和[开发规范](docs/project/09-development-standards.md)。
 
-## 11. 数据来源与致谢
+## 10. 数据来源与致谢
 
 项目子集来自 UCI Individual Household Electric Power Consumption 数据集的 2007 年 1 月至 6 月记录，原作者为 Georges Hebrail 与 Alice Berard，数据集 DOI 为 [10.24432/C58K54](https://doi.org/10.24432/C58K54)。课程材料同时给出了对应的 [Kaggle 页面](https://www.kaggle.com/datasets/thedevastator/240000-household-electricity-consumption-records)。
-
-使用数据、论文、开源库和大模型辅助内容时，应在最终报告中按学校模板注明来源。不得删除原始数据归属信息。
