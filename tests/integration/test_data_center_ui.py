@@ -5,10 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from streamlit.testing.v1 import AppTest
 
+import powerinsight.services.data_service as data_service_module
 from powerinsight.data.catalog import compute_sha256
 from powerinsight.services.data_service import DataService
+from powerinsight.services.runtime import RuntimeContext
 from tests.data.fixtures import raw_minute_frame
 from tests.data.runtime import make_runtime_context
 
@@ -55,3 +58,32 @@ def test_data_center_renders_completed_manifest_and_split_counts(tmp_path: Path)
     assert any("Manifest 别名" in item.value for item in app.caption)
     assert any("M2 处理产物可读取" in item.value for item in app.markdown)
     assert app.dataframe
+
+
+def test_data_center_buttons_trigger_validation_and_preprocessing(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context = make_runtime_context(tmp_path)
+    _write_source(context.paths.builtin_csv)
+    source_sha256 = compute_sha256(context.paths.builtin_csv)
+
+    class FixtureDataService(DataService):
+        def __init__(self, runtime_context: RuntimeContext) -> None:
+            super().__init__(runtime_context, expected_sha256=source_sha256)
+
+    monkeypatch.setattr(data_service_module, "DataService", FixtureDataService)
+    app = AppTest.from_file("app/pages/data_center.py")
+    app.session_state["runtime_context"] = context
+    app.run(timeout=30)
+
+    app.button[0].click().run(timeout=30)
+    assert not app.exception
+    assert any("完整质量校验已完成" in item.value for item in app.success)
+    assert any("数据质量" in item.value for item in app.markdown)
+
+    app.button[1].click().run(timeout=30)
+    assert not app.exception
+    assert any("M2 处理完成" in item.value for item in app.success)
+    assert any("M2 处理产物可读取" in item.value for item in app.markdown)
+    assert "15 分钟点数" in {metric.label for metric in app.metric}

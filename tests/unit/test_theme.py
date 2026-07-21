@@ -34,6 +34,10 @@ def test_theme_contains_required_tokens_and_accessibility_modes() -> None:
     assert "prefers-contrast: more" in THEME_CSS
     assert ":focus-visible" in THEME_CSS
     assert "transform: scale(0.98)" in THEME_CSS
+    assert '[data-testid="stAppViewContainer"]' in THEME_CSS
+    assert '[data-testid="stSidebarNav"]' in THEME_CSS
+    assert '[data-testid="stMetric"]' in THEME_CSS
+    assert '[data-testid="stDataFrame"]' in THEME_CSS
 
 
 def test_theme_is_initialized_only_from_the_streamlit_entrypoint() -> None:
