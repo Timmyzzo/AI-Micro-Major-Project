@@ -2,8 +2,8 @@
 
 > 项目展示名：智电洞察（PowerInsight）
 > 基础实验：实验 6《家庭用电数据集的探索》
-> 当前阶段：M1 工程骨架已实现并验证；数据处理和模型训练尚未开始
-> 文档基线版本：v0.2.0（2026-07-21）
+> 当前阶段：M2 数据闭环已实现并验证；模型训练、预测、预警和优化尚未开始
+> 文档基线版本：v0.3.0（2026-07-21）
 > GitHub 仓库：[Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)
 
 本项目面向《电力人工智能综合实训》，基于家庭分钟级用电数据，设计一个集数据接入、数据质量检查、用电监测、负荷预测、异常预警、用能分析、优化模拟和大模型解释于一体的本地可视化系统。项目以“技术有新意、结果可验证、工作量可控制、现场展示稳定”为核心原则。
@@ -12,7 +12,7 @@
 
 ## 1. 当前仓库状态
 
-当前仓库已完成可启动工程骨架、项目隔离环境、依赖锁定、配置、日志、SQLite 元数据和 Streamlit 导航；数据与模型业务仍处于计划状态。
+当前仓库已完成可启动工程骨架和 M2 数据闭环：内置 CSV 可被真实校验，短/长缺失按规则处理，数据聚合为 15 分钟并按固定月份切分，Parquet 与 manifest 可重复生成，SQLite 登记轻量元数据，数据中心可展示真实质量状态。模型业务仍处于计划状态。
 
 | 项目 | 当前状态 |
 | --- | --- |
@@ -20,9 +20,9 @@
 | 开发规范、环境方案、测试与验收方案 | 已形成文档基线 |
 | Python 与依赖 | Python 3.11.14 项目环境已验证；`pyproject.toml` + `uv.lock` 为权威依赖入口 |
 | 应用骨架 | Streamlit 八页导航、配置、路径、脱敏日志和系统诊断已实现 |
-| SQLite | schema v1 元数据空表已实现并验证幂等初始化；未导入原始时序 |
-| 自动化质量 | Ruff、格式、mypy、pre-commit 和 32 项 pytest 已通过 |
-| 数据预处理产物 | 未生成 |
+| SQLite | schema v1 已复用；实际登记 1 个数据集和 1 个已完成预处理运行，不保存原始或聚合时序 |
+| 自动化质量 | Ruff、格式、mypy、pip check 和 62 项 pytest 已通过；最终 pre-commit 结果见测试文档 |
+| 数据预处理产物 | 已在本地生成分钟 Parquet、15 分钟 Parquet 和 manifest；均为 `.gitignore` 保护的可再生产物，不提交 Git |
 | 模型训练与评估结果 | 未执行 |
 | 系统截图与课程报告结果章节 | 待实现后补充 |
 | Git 仓库 | [Timmyzzo/AI-Micro-Major-Project](https://github.com/Timmyzzo/AI-Micro-Major-Project)，默认分支 main |
@@ -37,7 +37,16 @@ uv sync --extra dev --frozen
 .\.venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
 ~~~
 
-首次建立环境时，`uv` 会按 `.python-version` 获取 CPython 3.11.14。应用默认禁用 LLM，不需要 API Key 即可启动；当前页面只展示真实环境状态和未实现说明，不会自动处理数据、训练模型或调用外部 API。
+首次建立环境时，`uv` 会按 `.python-version` 获取 CPython 3.11.14。应用默认禁用 LLM，不需要 API Key 即可启动；完整数据校验和预处理只由数据中心按钮或命令行脚本显式触发，不会在页面刷新时自动执行，也不会训练模型或调用外部 API。
+
+### M2 数据命令
+
+~~~powershell
+.\.venv\Scripts\python.exe scripts\validate_data.py --config configs\default.yaml
+.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\default.yaml
+~~~
+
+当前内置数据的稳定身份为 `ds_household_power_c79e3e19`，默认处理身份为 `prep_c79e3e19_cb65036717cf`。相同源文件和相同配置安全重跑时保持相同 ID 和配置指纹。
 
 ## 2. 已有材料
 
@@ -51,7 +60,7 @@ uv sync --extra dev --frozen
 
 `docs/课程提交报告`（课程提交报告）这个文件夹在项目未完成的情况下无需读取。
 
-经本轮只读盘点，CSV 包含 260,640 条分钟记录，时间范围为 2007-01-01 00:00:00 至 2007-06-30 23:59:00；共有 3,771 行测量值缺失，占 1.4468%，其中最长连续缺失段为 3,723 分钟。数据字段、单位、清洗和切分规则见[数据规格与治理](docs/project/05-data-specification.md)。
+经 M2 程序化校验，CSV 包含 260,640 条分钟记录，时间范围为 2007-01-01 00:00:00 至 2007-06-30 23:59:00；共有 3,771 行测量值缺失，占 1.4468%，分为 13 段，其中最长连续缺失段为 3,723 分钟。默认规则实际插值 48 行短缺失并保留 3,723 行长缺失，生成 17,376 个 15 分钟点，固定切分为训练 11,520、验证 2,976、测试 2,880。数据字段、单位、清洗和切分规则见[数据规格与治理](docs/project/05-data-specification.md)。
 
 ## 3. 项目核心能力
 

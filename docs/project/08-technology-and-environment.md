@@ -2,7 +2,7 @@
 
 ## 1. 当前状态声明
 
-截至 2026-07-21，M1 工程骨架已在目标 Windows 电脑上实现并验证：项目使用 uv 管理的 CPython 3.11.14 和 `.venv`，依赖已锁定，CUDA 版 PyTorch、配置、日志、SQLite、Streamlit、诊断脚本和质量门禁均可运行。尚未处理完整数据、训练模型、生成模型指标或调用真实 OpenAI 兼容 API。
+截至 2026-07-21，M1 工程骨架和 M2 数据闭环已在目标 Windows 电脑上实现并验证：项目使用 uv 管理的 CPython 3.11.14 和 `.venv`，依赖已锁定，CUDA 版 PyTorch、配置、日志、SQLite、Streamlit、数据校验、Parquet 处理和质量门禁均可运行。尚未训练模型、生成模型指标或调用真实 OpenAI 兼容 API。
 
 ## 2. 技术选型总表
 
@@ -233,6 +233,7 @@ data:
   target_cadence: 15min
   short_gap_max_minutes: 60
   bucket_min_valid_ratio: 0.8
+  unmetered_negative_tolerance_wh: 1.0e-9
   train_end: 2007-04-30T23:59:59
   validation_end: 2007-05-31T23:59:59
   test_end: 2007-06-30T23:59:59
@@ -294,11 +295,16 @@ uv sync --extra dev --frozen
 .\.venv\Scripts\python.exe -m pytest
 ~~~
 
-以下数据和训练命令仍是后续里程碑计划，当前脚本尚未创建，不得执行或描述为完成：
+M2 已创建并验证：
 
 ~~~powershell
-python scripts/validate_data.py --config configs/default.yaml
-python scripts/prepare_data.py --config configs/default.yaml
+.\.venv\Scripts\python.exe scripts\validate_data.py --config configs\default.yaml
+.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\default.yaml
+~~~
+
+以下训练和发布命令仍是后续里程碑计划，当前脚本尚未创建，不得执行或描述为完成：
+
+~~~powershell
 python scripts/train_baselines.py --config configs/default.yaml
 python scripts/train_patchtst.py --config configs/default.yaml --model-config configs/model/patchtst_small.yaml
 python scripts/evaluate.py --run-id <run_id>
@@ -435,3 +441,4 @@ M1 已保存或记录：
 | --- | --- | --- |
 | v0.1.0 | 2026-07-21 | 建立技术栈、建议版本、Windows/GPU 配置、变量和故障排查方案 |
 | v0.2.0 | 2026-07-21 | 回填 Python 3.11.14、锁定依赖、CUDA 13.0、RTX 4060 和 M1 环境验收结果 |
+| v0.3.0 | 2026-07-21 | 回填 M2 数据脚本、处理配置和完整 CSV 验收状态 |

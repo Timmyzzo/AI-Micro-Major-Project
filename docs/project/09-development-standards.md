@@ -319,6 +319,15 @@
 .\.venv\Scripts\python.exe -m pre_commit run --all-files
 ~~~
 
+M2 新增数据命令：
+
+~~~powershell
+.\.venv\Scripts\python.exe scripts\validate_data.py --config configs\default.yaml
+.\.venv\Scripts\python.exe scripts\prepare_data.py --config configs\default.yaml
+~~~
+
+`validate_data.py` 只计算身份、schema 和质量报告；`prepare_data.py` 生成可再生产物并登记元数据，明确不启动训练。配置文件可以通过 `--config` 指定，输出只包含项目相对路径别名和统计摘要。
+
 `.pre-commit-config.yaml` 使用本地 hooks，并通过锁定的 uv 环境执行同一组命令，避免 hooks 与手工命令使用不同解释器。
 
 ## 14. Git 工作流
@@ -432,3 +441,4 @@
 | --- | --- | --- |
 | v0.1.0 | 2026-07-21 | 建立 Python、数据、模型、LLM、UI、测试、Git 和安全规范 |
 | v0.2.0 | 2026-07-21 | 固化 uv 锁定环境、PyTorch 官方索引、M1 质量命令和本地 pre-commit 门禁 |
+| v0.3.0 | 2026-07-21 | 增加 M2 数据校验与可重复预处理命令及其安全边界 |
