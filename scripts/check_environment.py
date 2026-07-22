@@ -81,7 +81,9 @@ def main() -> int:
             "pass",
             "enabled and complete"
             if context.settings.llm_configured
-            else "disabled; no key required",
+            else "enabled; waiting for API key or model"
+            if context.settings.llm_enabled
+            else "disabled",
         )
     )
 

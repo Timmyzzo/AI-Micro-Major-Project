@@ -39,7 +39,7 @@ def main() -> None:
 
     apply_theme()
     st.session_state["runtime_context"] = context
-    render_sidebar_brand(stage="M4 · 模型闭环")
+    render_sidebar_brand(subtitle="电力数据智能分析")
     pages = [
         st.Page(
             APP_DIR / "pages" / filename,

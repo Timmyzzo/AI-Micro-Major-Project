@@ -21,16 +21,17 @@ StatusTone = Literal[
     "unavailable",
     "information",
 ]
+ConnectionTone = Literal["inactive", "pending", "success", "failed"]
 
 
-def render_sidebar_brand(*, stage: str) -> None:
+def render_sidebar_brand(*, subtitle: str) -> None:
     """Render a stable app identity above Streamlit navigation."""
     st.sidebar.markdown(
         (
             '<div class="pi-brand">'
             '<div class="pi-brand-mark" aria-hidden="true">PI</div>'
             '<div><div class="pi-brand-name">智电洞察</div>'
-            f'<div class="pi-brand-stage">{escape(stage)}</div></div>'
+            f'<div class="pi-brand-stage">{escape(subtitle)}</div></div>'
             "</div>"
         ),
         unsafe_allow_html=True,
@@ -107,3 +108,28 @@ def render_fact_list(items: Sequence[tuple[str, str]]) -> None:
         for label, value in items
     )
     st.markdown(f'<dl class="pi-facts">{facts}</dl>', unsafe_allow_html=True)
+
+
+def render_connection_status(
+    *,
+    tone: ConnectionTone,
+    status: str,
+    model: str,
+    detail: str,
+) -> None:
+    """Render a compact five-bar connection indicator inspired by device status UI."""
+    bars = "".join('<span class="pi-connection-bar"></span>' for _ in range(5))
+    st.markdown(
+        (
+            f'<section class="pi-connection" data-tone="{tone}">'
+            '<div class="pi-connection-copy">'
+            '<div class="pi-connection-kicker">大模型 API</div>'
+            f'<div class="pi-connection-title">{escape(status)}</div>'
+            f'<div class="pi-connection-model">{escape(model)}</div>'
+            f'<div class="pi-connection-detail">{escape(detail)}</div>'
+            "</div>"
+            f'<div class="pi-connection-bars" aria-label="{escape(status)}">{bars}</div>'
+            "</section>"
+        ),
+        unsafe_allow_html=True,
+    )

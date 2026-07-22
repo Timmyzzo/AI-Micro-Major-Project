@@ -1,15 +1,17 @@
-"""Native-style overview of the current verified PowerInsight state."""
+"""Presentation-first overview for PowerInsight."""
 
 from __future__ import annotations
 
 import streamlit as st
 
 from app.components.layout import (
-    render_fact_list,
+    ConnectionTone,
+    render_connection_status,
     render_page_header,
     render_section_heading,
-    render_status_panel,
 )
+from powerinsight.services import advice_service
+from powerinsight.services.advice_service import LlmProbeResult
 from powerinsight.services.data_service import DataService
 from powerinsight.services.forecast_service import ForecastService
 from powerinsight.services.runtime import RuntimeContext
@@ -18,137 +20,95 @@ from powerinsight.services.runtime import RuntimeContext
 def _get_context() -> RuntimeContext:
     context = st.session_state.get("runtime_context")
     if not isinstance(context, RuntimeContext):
-        st.error("运行上下文尚未初始化，请从应用入口启动。")
+        st.error("系统尚未初始化，请从应用入口启动。")
         st.stop()
     return context
 
 
+def _connection_view(
+    context: RuntimeContext,
+    result: LlmProbeResult | None,
+) -> tuple[ConnectionTone, str, str]:
+    if result is not None and result.status == "success":
+        latency = f"{result.latency_ms:.0f} ms" if result.latency_ms is not None else "已响应"
+        return "success", "连接正常", latency
+    if result is not None and result.status == "failed":
+        return "failed", "连接失败", result.diagnostic or "请稍后重试"
+    if result is not None and result.status == "unconfigured":
+        return "inactive", "等待配置", result.diagnostic or "请补充连接信息"
+    if context.settings.llm_configured:
+        return "pending", "已配置，等待测试", "点击按钮验证模型响应"
+    return "inactive", "等待配置", "补充 API Key 和模型后即可测试"
+
+
 context = _get_context()
-status = context.status
 data_state = DataService(context).inspect_builtin_state()
 data_ready = data_state.manifest is not None and data_state.processed_exists
-forecast_availability = ForecastService(context).inspect_availability()
-forecast_ready = forecast_availability.status == "ready"
+forecast = ForecastService(context).inspect_availability()
+forecast_ready = forecast.status == "ready"
 
 render_page_header(
-    eyebrow="PowerInsight · 系统总览",
-    title="当前状态，一目了然",
-    description="聚焦已验证的数据、分析、预测和预警；剩余范围已收缩为一个可选 API 建议入口。",
-    badge="M4 已验证" if forecast_ready else "M3 已验证",
+    eyebrow="PowerInsight",
+    title="系统总览",
+    description="查看数据、分析、预测、预警和大模型连接状态。",
+    badge="运行中",
 )
+
+render_section_heading(title="核心功能")
+summary = st.columns(4)
+summary[0].metric("数据", "已就绪" if data_ready else "待准备")
+summary[1].metric("用电分析", "可用" if data_ready else "待准备")
+summary[2].metric(
+    "负荷预测",
+    f"{len(forecast.models)} 个模型" if forecast_ready else "待准备",
+)
+summary[3].metric("监测预警", "可用" if forecast_ready else "待准备")
 
 if data_ready and data_state.manifest is not None:
-    split_counts = data_state.manifest.splits["counts"]
-    render_status_panel(
-        tone="ready",
-        label="核心状态",
-        title="M2 数据与 M3 分析基础可用",
-        description=(
-            "内置 CSV 已建立稳定身份，质量报告、15 分钟聚合、固定月份切分与 manifest 均可读取。"
-        ),
-        evidence=(
-            data_state.manifest.dataset_id,
-            data_state.manifest.preprocess_id,
-            f"15 分钟点数 {sum(split_counts.values()):,}",
-        ),
-        next_step="前往用电分析查看真实历史 KPI、趋势、周期和分项结构。",
+    manifest = data_state.manifest
+    coverage = 1.0 - (
+        manifest.quality_report.measurement_missing_row_count / manifest.source_rows
+        if manifest.source_rows
+        else 0.0
     )
-elif data_state.source_exists:
-    render_status_panel(
-        tone="attention",
-        label="核心状态",
-        title="原始数据可用，M2 产物尚未就绪",
-        description="页面只完成了低成本文件身份检查，没有自动执行完整校验或预处理。",
-        evidence=tuple(
-            item for item in (data_state.dataset_id, data_state.source_path_alias) if item
-        ),
-        next_step="在数据中心主动运行完整质量校验，并按需生成 M2 处理产物。",
-    )
-else:
-    render_status_panel(
-        tone="blocked",
-        label="核心状态",
-        title="内置原始数据缺失",
-        description="后续分析与模型能力都依赖课程提供的只读 CSV，当前不能继续建立数据闭环。",
-        evidence=(data_state.source_path_alias,),
-        next_step="恢复原始 CSV 后重新启动应用；不要用空文件或修改配置绕过校验。",
-    )
+    details = st.columns(3)
+    details[0].metric("数据时间范围", f"{manifest.start_time:%Y-%m} 至 {manifest.end_time:%Y-%m}")
+    details[1].metric("分析粒度", "15 分钟")
+    details[2].metric("有效数据覆盖率", f"{coverage:.2%}")
 
 st.write("")
-model_col, environment_col = st.columns((1.05, 1), gap="large")
-with model_col:
-    render_section_heading(
-        title="模型与智能能力",
-        description="预测和预警使用确定性结果；大模型只在用户点击后生成简短文字建议。",
-    )
-    if forecast_ready:
-        default_model = next(
-            (model for model in forecast_availability.models if model.is_default),
-            forecast_availability.models[0],
-        )
-        render_status_panel(
-            tone="success",
-            label="模型状态",
-            title="M4 真实模型闭环可用",
-            description="已完成同窗口基线对比、验证集选模、固定测试评估和分步 90% 共形区间。",
-            evidence=(
-                status.model_status,
-                f"默认 {default_model.display_name}",
-                f"测试 MAE {default_model.test_mae:.4f} kW",
-            ),
-            next_step="前往负荷预测选择固定测试起点，运行即时推理或加载离线缓存。",
-        )
-    else:
-        render_status_panel(
-            tone="planned",
-            label="模型状态",
-            title="尚未训练任何模型",
-            description="当前没有兼容模型、预测区间或测试指标，页面加载也不会触发训练。",
-            evidence=(status.model_status, "无预测结果", "无模型指标"),
-            next_step="按固定时间切分进入 M4 模型训练与评估；M3 页面不会生成预测。",
-        )
+render_section_heading(title="大模型 API")
+stored = st.session_state.get("llm_probe_result")
+probe = stored if isinstance(stored, LlmProbeResult) else None
+tone, connection_status, detail = _connection_view(context, probe)
+render_connection_status(
+    tone=tone,
+    status=connection_status,
+    model=context.settings.openai_model or "尚未配置模型",
+    detail=detail,
+)
 
-with environment_col:
-    render_section_heading(
-        title="运行环境",
-        description="只显示非敏感、可核对的本机诊断。",
-    )
-    render_fact_list(
-        (
-            ("计算设备", status.gpu_name or "未检测到 CUDA 设备，使用 CPU 降级"),
-            ("CUDA", "可用" if status.cuda_available else "不可用"),
-            ("LLM", status.llm_status),
-            ("SQLite", status.database_status),
-        )
-    )
+if st.button(
+    "测试 API 连接",
+    type="primary",
+    icon=":material/network_check:",
+    key="home_llm_probe",
+):
+    with st.spinner("正在连接大模型……"):
+        st.session_state["llm_probe_result"] = advice_service.probe_llm_connection(context.settings)
+    st.rerun()
+
+if probe is not None and probe.status == "success":
+    st.success(f"模型回复：{probe.text}")
+elif probe is not None and probe.status == "failed":
+    st.error(f"连接失败：{probe.diagnostic or '未知错误'}")
+elif probe is not None and probe.status == "unconfigured":
+    st.warning(probe.diagnostic or "请补充大模型连接信息。")
 
 st.write("")
-render_section_heading(
-    title="可预期的下一步",
-    description="每一阶段只在真实实现和验收后改变状态，避免把计划写成结果。",
-)
-render_fact_list(
-    (
-        ("已完成 · M2", "数据校验、缺失治理、15 分钟聚合、固定切分、manifest 与元数据登记"),
-        ("已完成 · M3", "确定性 KPI、历史趋势、周期规律、分项结构与本地证据摘要"),
-        (
-            "已完成 · M4" if forecast_ready else "后续 · M4",
-            "模型对比、验证集选模、测试评估、共形区间、缓存和只加载推理页面"
-            if forecast_ready
-            else "训练与评估模型，并接入只加载推理页面",
-        ),
-        ("已完成 · M5 核心", "历史回放、三类确定性预警和 CSV 导出"),
-        ("精简收尾", "一个可选的大模型 API 简短建议入口；不建设优化平台或完整报告系统"),
-    )
-)
-
-st.write("")
-render_status_panel(
-    tone="information",
-    label="用户控制",
-    title="耗时操作只由明确动作触发",
-    description=(
-        "完整校验和预处理只在数据中心由按钮启动；预测只由负荷预测页按钮触发；"
-        "页面刷新不会训练模型或调用外部 API；API 只由智能建议页按钮触发。"
-    ),
-)
+render_section_heading(title="推荐展示顺序")
+steps = st.columns(4)
+steps[0].metric("1", "查看数据来源")
+steps[1].metric("2", "分析用电规律")
+steps[2].metric("3", "运行负荷预测")
+steps[3].metric("4", "生成智能建议")

@@ -43,9 +43,9 @@ def test_analytics_ready_state_has_real_metrics_charts_and_date_control(tmp_path
     visible_markup = "\n".join(item.value for item in app.markdown)
 
     assert not app.exception
-    assert "分析完成" in visible_markup
-    assert "质量限制" not in visible_markup
-    assert "不训练模型" in visible_markup
+    assert "用电分析" in visible_markup
+    assert "M3" not in visible_markup
+    assert "不训练模型" not in visible_markup
     assert len(app.date_input) == 1
     assert len(app.metric) == 8
     assert len(app.get("plotly_chart")) == 5
@@ -55,11 +55,10 @@ def test_analytics_ready_state_has_real_metrics_charts_and_date_control(tmp_path
 
 def test_analytics_attention_state_preserves_long_gap_evidence(tmp_path: Path) -> None:
     app = _run(_context_with_day(tmp_path, missing_positions=set(range(300, 361))))
-    visible_markup = "\n".join(item.value for item in app.markdown)
 
     assert not app.exception
-    assert "存在需要保留的质量限制" in visible_markup
-    assert "长缺失" in visible_markup
+    assert app.warning
+    assert "缺失区段" in app.warning[0].value
     assert len(app.get("plotly_chart")) == 5
 
 
@@ -105,8 +104,8 @@ def test_analytics_blocked_state_explains_missing_manifest(tmp_path: Path) -> No
     visible_markup = "\n".join(item.value for item in app.markdown)
 
     assert not app.exception
-    assert "M2 manifest 不可用" in visible_markup
-    assert "ANALYTICS_MANIFEST_MISSING" in visible_markup
+    assert "分析数据尚未准备" in visible_markup
+    assert "ANALYTICS_MANIFEST_MISSING" not in visible_markup
     assert not app.metric
     assert not app.get("plotly_chart")
 
@@ -134,7 +133,7 @@ def test_analytics_failed_state_is_display_safe(
 
     assert not app.exception
     assert "用电分析执行失败" in visible_markup
-    assert "ANALYTICS_TEST_FAILURE" in visible_markup
+    assert "ANALYTICS_TEST_FAILURE" not in visible_markup
     assert str(tmp_path) not in visible_markup
     assert not app.metric
     assert not app.get("plotly_chart")

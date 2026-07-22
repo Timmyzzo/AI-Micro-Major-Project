@@ -45,3 +45,27 @@ def test_fact_list_preserves_order_and_escapes_values(monkeypatch: pytest.Monkey
     markup = captured[0]
     assert markup.index("第一项") < markup.index("第二项")
     assert "&lt;未知&gt;" in markup
+
+
+def test_connection_status_renders_five_bars_and_escapes_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[str] = []
+
+    def capture(body: str, *, unsafe_allow_html: bool) -> None:
+        assert unsafe_allow_html is True
+        captured.append(body)
+
+    monkeypatch.setattr(layout.st, "markdown", capture)
+
+    layout.render_connection_status(
+        tone="success",
+        status="连接正常",
+        model="<model>",
+        detail="120 ms",
+    )
+
+    markup = captured[0]
+    assert markup.count('class="pi-connection-bar"') == 5
+    assert "&lt;model&gt;" in markup
+    assert 'data-tone="success"' in markup

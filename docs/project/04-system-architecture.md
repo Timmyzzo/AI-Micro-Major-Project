@@ -14,8 +14,8 @@
   -> 模型训练/注册
   -> 冻结预测与缓存
   -> 回放与确定性预警
-  -> 本地模板建议
-  -> 用户可选的一次 Chat Completions 调用
+  -> 首页大模型连接测试
+  -> 用户触发的 Chat Completions 智能建议
 ~~~
 
 ## 模块
@@ -24,7 +24,7 @@
 - `analytics`：纯确定性分析；
 - `forecasting`：窗口、模型、指标、共形和注册；
 - `alerts`：质量、规则和残差预警；
-- `services/advice_service.py`：聚合摘要、本地模板和一次 API 调用；
+- `services/advice_service.py`：聚合摘要、大模型连接测试和一次建议调用；
 - `persistence`：保留现有轻量元数据，时序仍存文件。
 
 ## 删除的架构

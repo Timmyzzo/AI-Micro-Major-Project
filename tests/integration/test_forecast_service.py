@@ -9,7 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from powerinsight.services.forecast_service import ForecastError, ForecastService
+from powerinsight.services.forecast_service import (
+    ForecastError,
+    ForecastService,
+    presentation_model_name,
+)
 from tests.data.forecasting import prepare_forecast_fixture
 from tests.data.runtime import make_runtime_context
 
@@ -19,7 +23,7 @@ def test_forecast_availability_blocks_without_registered_model(tmp_path: Path) -
     availability = ForecastService(context).inspect_availability()
 
     assert availability.status == "blocked"
-    assert "M2" in availability.title
+    assert availability.title == "预测数据尚未准备"
 
 
 def test_forecast_availability_lists_compatible_default_and_origins(tmp_path: Path) -> None:
@@ -29,8 +33,16 @@ def test_forecast_availability_lists_compatible_default_and_origins(tmp_path: Pa
 
     assert availability.status == "ready"
     assert availability.models == (model,)
+    assert presentation_model_name(model) == "昨日同刻基线"
     assert len(availability.origins) == 2
     assert availability.origins[0] == datetime(2007, 6, 8)
+    comparison = ForecastService(context).comparison_frame(availability.models)
+    assert tuple(comparison.columns) == (
+        "模型",
+        "MAE 平均绝对误差（kW）",
+        "RMSE 均方根误差（kW）",
+        "R² 决定系数",
+    )
 
 
 def test_naive_forecast_runs_without_scaler_then_reuses_offline_cache(tmp_path: Path) -> None:

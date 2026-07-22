@@ -8,7 +8,9 @@ param(
     [ValidateRange(1, 65535)]
     [int]$PreferredPort = 8501,
 
-    [switch]$NoBrowser
+    [switch]$NoBrowser,
+
+    [switch]$Restart
 )
 
 $ErrorActionPreference = "Stop"
@@ -66,6 +68,19 @@ foreach ($candidatePort in $CandidatePorts) {
     $isCurrentProject = $commandLine.IndexOf($AppPath, [StringComparison]::OrdinalIgnoreCase) -ge 0
 
     if ($isCurrentProject -and (Test-PowerInsightHealth -Port $candidatePort)) {
+        if ($Restart) {
+            Stop-Process -Id $listener.OwningProcess -Force
+            for ($attempt = 0; $attempt -lt 20; $attempt += 1) {
+                if ($null -eq (Get-PortListener -Port $candidatePort)) {
+                    break
+                }
+                Start-Sleep -Milliseconds 100
+            }
+            if ($null -ne (Get-PortListener -Port $candidatePort)) {
+                throw "The existing PowerInsight process could not be stopped."
+            }
+            break
+        }
         Open-PowerInsight -Port $candidatePort
         exit 0
     }

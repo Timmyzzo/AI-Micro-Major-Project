@@ -12,7 +12,7 @@ from typing import Any, Literal
 from urllib.parse import urlparse
 
 import yaml
-from pydantic import BaseModel, Field, SecretStr, ValidationError, field_validator, model_validator
+from pydantic import BaseModel, Field, SecretStr, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from powerinsight.paths import PROJECT_ROOT
@@ -87,7 +87,7 @@ class AppSettings(BaseSettings):
     app_database_path: Path = Path("artifacts/powerinsight.db")
     device: DeviceName = "auto"
     model_id: str | None = None
-    llm_enabled: bool = False
+    llm_enabled: bool = True
     openai_api_key: SecretStr | None = Field(default=None, repr=False, exclude=True)
     openai_base_url: str | None = None
     openai_model: str | None = None
@@ -130,15 +130,6 @@ class AppSettings(BaseSettings):
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise ValueError("OPENAI_BASE_URL must be an absolute HTTP(S) URL")
         return value.rstrip("/")
-
-    @model_validator(mode="after")
-    def validate_llm_configuration(self) -> AppSettings:
-        """Fail clearly when LLM use is enabled without its required secret and model."""
-        if self.llm_enabled and self.openai_api_key is None:
-            raise ValueError("LLM_ENABLED=true requires OPENAI_API_KEY")
-        if self.llm_enabled and self.openai_model is None:
-            raise ValueError("LLM_ENABLED=true requires OPENAI_MODEL")
-        return self
 
     @property
     def llm_configured(self) -> bool:

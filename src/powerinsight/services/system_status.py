@@ -39,7 +39,7 @@ def collect_system_status(settings: AppSettings, paths: ProjectPaths) -> SystemS
                     paths.data_dir / "processed" / manifest.preprocess_id / "power_15min.parquet"
                 )
                 data_status = (
-                    "M2 数据闭环已生成"
+                    "分析数据已就绪"
                     if manifest.source_sha256 == source_sha256 and processed_path.is_file()
                     else "处理产物不完整或已失效"
                 )
@@ -53,20 +53,20 @@ def collect_system_status(settings: AppSettings, paths: ProjectPaths) -> SystemS
     default_model = next((model for model in registered_models if model.is_default), None)
     if default_model is not None:
         model_status = (
-            f"M4 已注册 {len(registered_models)} 个模型；默认 {default_model.display_name}"
+            f"已加载 {len(registered_models)} 个预测模型；推荐 {default_model.display_name}"
         )
     elif registered_models:
-        model_status = f"M4 已注册 {len(registered_models)} 个模型；尚无默认模型"
+        model_status = f"已加载 {len(registered_models)} 个预测模型"
     elif settings.model_id:
         model_status = f"已配置模型 ID {settings.model_id}，尚未验证权重"
     else:
         model_status = "尚未训练或注册模型"
     if settings.llm_configured:
-        llm_status = "已配置；只在智能建议页点击后调用"
+        llm_status = "已配置，等待连接测试"
     elif settings.llm_enabled:
-        llm_status = "已启用但配置不完整"
+        llm_status = "已启用，等待补充连接信息"
     else:
-        llm_status = "未启用；智能建议使用本地模板"
+        llm_status = "未启用"
 
     return SystemStatus(
         python_version=platform.python_version(),

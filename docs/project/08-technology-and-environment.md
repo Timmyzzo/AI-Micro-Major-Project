@@ -22,6 +22,8 @@ uv sync --extra dev --frozen
 
 CUDA 不可用时允许 CPU 推理。Streamlit 页面不训练模型。
 
+逐轮训练历史由离线训练脚本写入模型 `metrics.json`；当前应用页读取冻结结果，只显示训练耗时和测试指标。完整安装、首次数据处理、离线训练和页面操作见 [系统使用指南](15-system-usage-guide.md)。
+
 ## API 环境变量
 
 ~~~dotenv

@@ -1,4 +1,4 @@
-"""Load-only M4 forecast service with compatibility checks and offline caching."""
+"""Forecast service with compatibility checks and offline caching."""
 
 from __future__ import annotations
 
@@ -29,6 +29,17 @@ from powerinsight.services.runtime import RuntimeContext
 
 ForecastStatus = Literal["completed", "cached"]
 AvailabilityStatus = Literal["ready", "blocked"]
+PRESENTATION_MODEL_TYPES = frozenset({"seasonal_day", "lstm", "patchtst"})
+PRESENTATION_MODEL_NAMES = {
+    "seasonal_day": "昨日同刻基线",
+    "lstm": "LSTM 神经网络",
+    "patchtst": "PatchTST 深度模型",
+}
+
+
+def presentation_model_name(model: RegisteredModel) -> str:
+    """Return the concise model name used by presentation pages."""
+    return PRESENTATION_MODEL_NAMES.get(model.model_type, model.display_name)
 
 
 class _Predictor(Protocol):
@@ -122,29 +133,30 @@ class ForecastService:
         self._context = context
 
     def inspect_availability(self) -> ForecastAvailability:
-        """Inspect M2 data, compatible M4 registry entries, and fixed test origins."""
+        """Inspect compatible presentation models and available forecast origins."""
         state = DataService(self._context).inspect_builtin_state()
         if state.manifest is None or not state.processed_exists:
             return ForecastAvailability(
                 status="blocked",
-                title="M2 预测数据依赖不可用",
-                reason="当前缺少可验证的 manifest 或 15 分钟 Parquet。",
-                evidence=("FCST_DATA_UNAVAILABLE",),
-                next_step="先在数据中心完成内置数据校验与预处理。",
+                title="预测数据尚未准备",
+                reason="当前没有可用于负荷预测的 15 分钟数据。",
+                evidence=(),
+                next_step="先在数据中心准备分析数据。",
             )
         registry_root = self._context.paths.root / "models" / "registry"
         models = tuple(
             model
             for model in list_registered_models(registry_root)
-            if self._is_compatible(model, state.manifest.preprocess_id, state.manifest.config_hash)
+            if model.model_type in PRESENTATION_MODEL_TYPES
+            and self._is_compatible(model, state.manifest.preprocess_id, state.manifest.config_hash)
         )
         if not models:
             return ForecastAvailability(
                 status="blocked",
-                title="没有与当前数据兼容的 M4 模型",
-                reason="页面不会训练模型，也不会用计划值伪造预测。",
-                evidence=(state.manifest.preprocess_id, "MODEL_COMPATIBLE_ARTIFACT_MISSING"),
-                next_step="在命令行运行 scripts/train_m4.py，并保留生成的本地模型产物。",
+                title="预测模型尚未准备",
+                reason="当前数据没有可用的预测模型。",
+                evidence=(),
+                next_step="运行模型训练后刷新页面。",
             )
         origins = self._available_origins(state.manifest.preprocess_id)
         if not origins:
@@ -152,20 +164,19 @@ class ForecastService:
                 status="blocked",
                 title="固定测试集没有合格预测起点",
                 reason="所有起点都必须具有 672 个连续有效历史点和 96 个真实未来点。",
-                evidence=("FCST_INSUFFICIENT_HISTORY",),
-                next_step="检查 M2 Parquet、长缺失掩码和固定月份切分。",
+                evidence=(),
+                next_step="重新准备分析数据或选择更完整的数据范围。",
             )
         ordered = tuple(sorted(models, key=lambda item: (not item.is_default, item.test_mae)))
         return ForecastAvailability(
             status="ready",
-            title="M4 模型与固定测试起点可用",
-            reason="页面只加载冻结模型并推理；训练、早停和测试评估均在命令行完成。",
+            title="预测模型已就绪",
+            reason="选择预测时间和模型即可开始。",
             evidence=(
-                state.manifest.preprocess_id,
-                f"兼容模型 {len(ordered)} 个",
-                f"测试起点 {len(origins)} 个",
+                f"模型 {len(ordered)} 个",
+                f"可选时间 {len(origins)} 个",
             ),
-            next_step="选择起点、模型和设备后运行即时预测，或允许复用离线缓存。",
+            next_step="选择预测时间和模型后开始预测。",
             models=ordered,
             origins=origins,
         )
@@ -300,7 +311,7 @@ class ForecastService:
                 title="模型指标不可读取",
                 reason="冻结指标文件缺失或格式无效。",
                 evidence=(model.model_id,),
-                next_step="重新运行 M4 训练与注册脚本。",
+                next_step="重新运行模型训练。",
             ) from exc
         if not isinstance(value, dict) or value.get("model_id") != model.model_id:
             raise ForecastError(
@@ -322,15 +333,10 @@ class ForecastService:
                 continue
             rows.append(
                 {
-                    "模型": model.display_name,
-                    "MAE（kW）": test.get("mae"),
-                    "RMSE（kW）": test.get("rmse"),
-                    "WAPE": test.get("wape"),
-                    "sMAPE": test.get("smape"),
-                    "R²": test.get("r2"),
-                    "覆盖率": interval.get("coverage"),
-                    "平均区间宽度（kW）": interval.get("average_width_kw"),
-                    "默认": "是" if model.is_default else "否",
+                    "模型": presentation_model_name(model),
+                    "MAE 平均绝对误差（kW）": test.get("mae"),
+                    "RMSE 均方根误差（kW）": test.get("rmse"),
+                    "R² 决定系数": test.get("r2"),
                 }
             )
         return pd.DataFrame(rows)
@@ -410,7 +416,7 @@ class ForecastService:
                 title="15 分钟预测数据不可读取",
                 reason="Parquet 缺失、损坏或列契约不兼容。",
                 evidence=(display_path(path, root=self._context.paths.root),),
-                next_step="重新运行 M2 预处理并使旧模型缓存失效。",
+                next_step="在数据中心重新准备分析数据。",
             ) from exc
 
     @staticmethod
@@ -592,7 +598,7 @@ class ForecastService:
             title="模型产物不完整或不兼容",
             reason=reason,
             evidence=(model.model_id, model.config_fingerprint),
-            next_step="重新运行 M4 训练脚本，且不要手工混用模型、缩放器或区间文件。",
+            next_step="重新运行模型训练。",
         )
 
 

@@ -1,4 +1,4 @@
-"""Deterministic historical electric-use analytics page."""
+"""Historical electric-use analytics page."""
 
 from __future__ import annotations
 
@@ -65,10 +65,7 @@ def _render_kpis(result: AnalyticsResult) -> None:
         _format_measurement(kpis.peak_active_power_kw, "kW"),
     )
     primary[3].metric("有效数据覆盖率", f"{summary.coverage_ratio:.1%}")
-    st.caption(
-        f"峰值时间：{_format_time(kpis.peak_time)}；"
-        "所有指标基于有效 15 分钟数据，未知值不显示为 0。"
-    )
+    st.caption(f"峰值时间：{_format_time(kpis.peak_time)}")
     secondary = st.columns(4)
     secondary[0].metric(
         "最低有效功率",
@@ -77,7 +74,7 @@ def _render_kpis(result: AnalyticsResult) -> None:
     secondary[1].metric("理论点数", f"{summary.expected_points:,}")
     secondary[2].metric("实际存在点数", f"{summary.actual_points:,}")
     secondary[3].metric("缺失点数", f"{summary.missing_points:,}")
-    st.caption(f"最低值时间：{_format_time(kpis.minimum_time)}；时间为数据集本地朴素时间。")
+    st.caption(f"最低值时间：{_format_time(kpis.minimum_time)}")
 
 
 def _trend_figure(result: AnalyticsResult) -> go.Figure:
@@ -220,7 +217,6 @@ def _render_submeter(result: AnalyticsResult) -> None:
             lambda value: "—" if pd.isna(value) else f"{value:.1%}"
         )
         st.dataframe(display, hide_index=True, width="stretch")
-        st.caption(result.submeter.note)
 
 
 context = _get_context()
@@ -228,10 +224,10 @@ service = AnalyticsService(context)
 availability = service.inspect_availability()
 
 render_page_header(
-    eyebrow="M3 · 确定性历史分析",
+    eyebrow="用电洞察",
     title="用电分析",
-    description="从已验证的 15 分钟处理数据计算真实 KPI、周期规律、分项结构与缺失证据。",
-    badge="不训练模型",
+    description="选择日期，查看负荷趋势、周期规律和分项用电。",
+    badge="历史分析",
 )
 
 if availability.status == "blocked":
@@ -240,7 +236,6 @@ if availability.status == "blocked":
         label="数据依赖",
         title=availability.title,
         description=availability.reason,
-        evidence=availability.evidence,
         next_step=availability.next_step,
     )
     st.stop()
@@ -252,19 +247,9 @@ minimum_date = availability.start_time.date()
 maximum_date = availability.end_time.date()
 default_start = max(minimum_date, maximum_date - timedelta(days=29))
 
-render_status_panel(
-    tone="ready",
-    label="数据依赖",
-    title=availability.title,
-    description=availability.reason,
-    evidence=availability.evidence,
-    next_step=availability.next_step,
-)
-
-st.write("")
 render_section_heading(
     title="分析范围",
-    description="起止日期均包含；内部使用结束日次日 00:00 作为半开区间上界。",
+    description="选择需要查看的开始和结束日期。",
 )
 selected_value = st.date_input(
     "分析日期范围",
@@ -307,7 +292,6 @@ except AnalyticsError as exc:
         label="分析状态",
         title=exc.title,
         description=exc.reason,
-        evidence=(exc.code, *exc.evidence),
         next_step=exc.next_step,
     )
     st.stop()
@@ -327,42 +311,24 @@ if result.status == "empty":
     )
     st.stop()
 
-tone = "attention" if result.status == "attention" else "success"
-status_title = "分析完成，但存在需要保留的质量限制" if result.status == "attention" else "分析完成"
-render_status_panel(
-    tone=tone,
-    label="分析状态",
-    title=status_title,
-    description="全部数值来自当前 M2 处理产物；功率、电量、缺失和分项口径彼此分离。",
-    evidence=(
-        result.range_summary.preprocess_id,
-        f"范围 {start_date} 至 {end_date}",
-        f"覆盖率 {result.range_summary.coverage_ratio:.1%}",
-    ),
-    next_step="结合覆盖率、样本数和质量说明解释图表，不把相关性写成因果。",
-)
+if result.status == "attention":
+    st.warning("所选范围存在缺失区段，趋势图已保留数据断点。")
 
 st.write("")
 render_section_heading(
     title="核心指标",
-    description="峰值和均值使用 kW；累计电量使用现有 Wh 能量字段求和后转换为 kWh。",
 )
 _render_kpis(result)
 
 st.write("")
 render_section_heading(
     title="历史趋势",
-    description=(
-        f"当前图表 {len(result.trend):,} 个点，上限 {context.settings.ui.max_chart_points:,}；"
-        "缺失点保持断线，不做前向填充。"
-    ),
 )
 st.plotly_chart(_trend_figure(result), width="stretch", theme="streamlit")
 
 st.write("")
 render_section_heading(
     title="周期规律",
-    description="每个桶都携带有效样本数、总样本数和覆盖率；工作日为星期一至星期五。",
 )
 hour_col, weekday_col = st.columns(2, gap="large")
 with hour_col:
@@ -374,20 +340,5 @@ st.plotly_chart(_day_type_figure(result), width="stretch", theme="streamlit")
 st.write("")
 render_section_heading(
     title="分项用电结构",
-    description="厨房、洗衣房、热水器/空调和未分项均使用真实能量字段，统一显示为 kWh。",
 )
 _render_submeter(result)
-
-st.write("")
-render_section_heading(
-    title="确定性摘要与限制",
-    description="每句话都可追溯到当前结果字段；没有调用 LLM，也没有预测未来。",
-)
-render_status_panel(
-    tone="attention" if result.status == "attention" else "information",
-    label="证据摘要",
-    title="当前数据范围内观察到的事实",
-    description="以下内容由本地规则生成，不表达未经数据支持的因果关系。",
-    evidence=result.evidence,
-    next_step="M4 将单独实现并验证模型训练与未来预测；本页不会提前展示相关结果。",
-)

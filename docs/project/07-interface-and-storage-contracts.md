@@ -8,7 +8,7 @@
 | AnalyticsService | 读取 15 分钟 Parquet 并计算分析结果 |
 | ForecastService | 检查模型兼容性、推理、缓存和导出 |
 | AlertService | 三类预警和 CSV 导出 |
-| advice_service | 聚合摘要、本地模板和一次 API 调用 |
+| advice_service | 聚合摘要、大模型连接测试和一次建议调用 |
 
 ## 文件
 

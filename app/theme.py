@@ -538,6 +538,97 @@ textarea:focus-visible,
   overflow-wrap: anywhere;
 }
 
+.pi-connection {
+  --pi-connection-color: var(--pi-text-tertiary);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.5rem;
+  align-items: center;
+  padding: clamp(1rem, 2vw, 1.4rem);
+  border: 1px solid color-mix(in srgb, var(--pi-connection-color) 32%, var(--pi-divider));
+  border-radius: var(--pi-radius-large);
+  background: color-mix(in srgb, var(--pi-connection-color) 5%, var(--pi-surface-primary));
+}
+
+.pi-connection[data-tone="pending"] {
+  --pi-connection-color: var(--pi-accent);
+}
+
+.pi-connection[data-tone="success"] {
+  --pi-connection-color: #69d53b;
+}
+
+.pi-connection[data-tone="failed"] {
+  --pi-connection-color: var(--pi-error);
+}
+
+.pi-connection-copy {
+  min-width: 0;
+}
+
+.pi-connection-kicker {
+  color: var(--pi-text-tertiary);
+  font-size: var(--pi-type-caption);
+  font-weight: 700;
+  letter-spacing: 0.045em;
+}
+
+.pi-connection-title {
+  margin-top: 0.3rem;
+  color: var(--pi-text-primary);
+  font-size: clamp(1.2rem, 1.05rem + 0.55vw, 1.55rem);
+  font-weight: 720;
+  letter-spacing: -0.025em;
+}
+
+.pi-connection-model {
+  margin-top: 0.22rem;
+  color: var(--pi-connection-color);
+  font-size: var(--pi-type-body);
+  font-weight: 650;
+}
+
+.pi-connection-detail {
+  margin-top: 0.35rem;
+  color: var(--pi-text-secondary);
+  font-size: var(--pi-type-caption);
+}
+
+.pi-connection-bars {
+  display: flex;
+  gap: 0.34rem;
+  align-items: center;
+  justify-content: center;
+  min-width: 6.5rem;
+  min-height: 4.5rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--pi-radius-medium);
+  background: #1b2a40;
+}
+
+.pi-connection-bar {
+  display: block;
+  width: 0.46rem;
+  height: 2.05rem;
+  border-radius: 999px;
+  background: var(--pi-connection-color);
+  box-shadow: 0 0 0.9rem color-mix(in srgb, var(--pi-connection-color) 24%, transparent);
+}
+
+.pi-connection[data-tone="pending"] .pi-connection-bar {
+  animation: pi-connection-pulse 1.25s ease-in-out infinite alternate;
+}
+
+.pi-connection[data-tone="pending"] .pi-connection-bar:nth-child(2),
+.pi-connection[data-tone="pending"] .pi-connection-bar:nth-child(4) {
+  animation-delay: 120ms;
+}
+
+@keyframes pi-connection-pulse {
+  from { opacity: 0.42; transform: scaleY(0.72); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
 @media (max-width: 56rem) {
   [data-testid="stMainBlockContainer"] {
     padding-top: 4rem;
@@ -554,6 +645,14 @@ textarea:focus-visible,
   .pi-fact {
     grid-template-columns: 1fr;
     gap: 0.25rem;
+  }
+
+  .pi-connection {
+    grid-template-columns: 1fr;
+  }
+
+  .pi-connection-bars {
+    width: 100%;
   }
 }
 

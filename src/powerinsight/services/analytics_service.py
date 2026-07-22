@@ -1,4 +1,4 @@
-"""Read-only service for deterministic M3 analytics over M2 artifacts."""
+"""Read-only service for deterministic analytics over prepared data."""
 
 from __future__ import annotations
 
@@ -33,7 +33,7 @@ REQUIRED_COLUMNS: tuple[str, ...] = (
 
 @dataclass(frozen=True)
 class AnalyticsAvailability:
-    """Low-cost, display-safe state for the current M3 dependency chain."""
+    """Low-cost, display-safe state for the analytics dependency chain."""
 
     status: Literal["ready", "blocked"]
     manifest: DatasetManifest | None
@@ -66,7 +66,7 @@ class AnalyticsError(RuntimeError):
 
 
 class AnalyticsService:
-    """Validate M2 identity, read required Parquet columns, and run pure analysis."""
+    """Validate prepared data, read required columns, and run pure analysis."""
 
     def __init__(self, context: RuntimeContext) -> None:
         self._context = context
@@ -84,9 +84,9 @@ class AnalyticsService:
                 raise AnalyticsError(
                     code="ANALYTICS_EMPTY_ARTIFACT",
                     title="处理数据为空",
-                    reason="M2 Parquet 可读取，但没有任何 15 分钟记录。",
+                    reason="分析数据中没有可用的 15 分钟记录。",
                     evidence=(manifest.preprocess_id,),
-                    next_step="在数据中心重新生成 M2 处理产物并复核记录数。",
+                    next_step="在数据中心重新准备分析数据。",
                 )
             start_time = _as_datetime(frame["timestamp"].min())
             end_time = _as_datetime(frame["timestamp"].max())
@@ -95,14 +95,14 @@ class AnalyticsService:
                 manifest=manifest,
                 start_time=start_time,
                 end_time=end_time,
-                title="M3 分析数据可用",
-                reason="manifest、处理身份、15 分钟 Parquet 与必需字段已通过只读校验。",
+                title="分析数据可用",
+                reason="15 分钟用电数据已准备完成。",
                 evidence=(
                     manifest.dataset_id,
                     manifest.preprocess_id,
                     f"15 分钟点数 {len(frame):,}",
                 ),
-                next_step="选择日期范围查看确定性历史分析。",
+                next_step="选择日期范围查看用电分析。",
             )
         except AnalyticsError as exc:
             return AnalyticsAvailability(
@@ -141,7 +141,7 @@ class AnalyticsService:
                 title="用电分析执行失败",
                 reason="处理数据已定位，但所选范围的只读查询或确定性计算失败。",
                 evidence=(type(exc).__name__, manifest.preprocess_id),
-                next_step="复核日期范围；若仍失败，在数据中心重新生成 M2 产物。",
+                next_step="复核日期范围；若仍失败，在数据中心重新准备分析数据。",
             ) from exc
 
     def _validated_artifact(self) -> tuple[DatasetManifest, Path]:
@@ -150,26 +150,26 @@ class AnalyticsService:
             raise AnalyticsError(
                 code="ANALYTICS_MANIFEST_IDENTITY_MISMATCH",
                 title="数据身份不一致",
-                reason="当前原始数据身份与 manifest 不一致，不能继续分析。",
+                reason="当前数据文件与已有分析数据不一致。",
                 evidence=tuple(item for item in (state.dataset_id,) if item),
-                next_step="在数据中心重新校验数据并生成与当前身份一致的 M2 产物。",
+                next_step="在数据中心重新准备分析数据。",
             )
         if state.manifest is None:
             raise AnalyticsError(
                 code="ANALYTICS_MANIFEST_MISSING",
-                title="M2 manifest 不可用",
-                reason="当前没有可验证的处理身份和字段契约。",
+                title="分析数据尚未准备",
+                reason="当前没有可用于分析的 15 分钟用电数据。",
                 evidence=tuple(item for item in (state.dataset_id,) if item),
-                next_step="前往数据中心生成 M2 处理产物。",
+                next_step="前往数据中心准备分析数据。",
             )
         manifest = state.manifest
         if manifest.schema_version != "1.0" or manifest.cadence.get("processed") != "15min":
             raise AnalyticsError(
                 code="ANALYTICS_MANIFEST_INCOMPATIBLE",
-                title="M2 manifest 版本不兼容",
-                reason="M3 仅接受 schema 1.0 的 15 分钟处理产物。",
+                title="分析数据版本不兼容",
+                reason="当前分析数据需要使用最新版本重新生成。",
                 evidence=(manifest.schema_version, str(manifest.cadence.get("processed"))),
-                next_step="使用当前代码和默认配置重新生成 M2 处理产物。",
+                next_step="在数据中心重新准备分析数据。",
             )
         missing_contract = tuple(
             column for column in REQUIRED_COLUMNS if column not in manifest.columns
@@ -177,10 +177,10 @@ class AnalyticsService:
         if missing_contract:
             raise AnalyticsError(
                 code="ANALYTICS_MANIFEST_COLUMNS_MISSING",
-                title="M2 字段契约不完整",
-                reason="manifest 缺少 M3 确定性分析所需字段。",
+                title="分析字段不完整",
+                reason="当前数据缺少用电分析所需字段。",
                 evidence=missing_contract,
-                next_step="重新生成 M2 manifest；不要在页面中猜测或补造字段。",
+                next_step="在数据中心重新准备分析数据。",
             )
         processed_path = (
             self._context.paths.data_dir
@@ -193,17 +193,17 @@ class AnalyticsService:
             raise AnalyticsError(
                 code="ANALYTICS_ARTIFACT_ALIAS_MISMATCH",
                 title="处理产物身份不一致",
-                reason="manifest 指向的处理产物与 preprocess_id 目录不一致。",
+                reason="当前分析数据文件与记录不一致。",
                 evidence=(manifest.preprocess_id,),
-                next_step="在数据中心重新生成 M2 处理产物。",
+                next_step="在数据中心重新准备分析数据。",
             )
         if not processed_path.is_file():
             raise AnalyticsError(
                 code="ANALYTICS_PARQUET_MISSING",
                 title="15 分钟处理数据缺失",
-                reason="manifest 存在，但对应 Parquet 文件不可用。",
+                reason="15 分钟分析数据文件不可用。",
                 evidence=(manifest.preprocess_id,),
-                next_step="在数据中心重新生成 M2 处理产物。",
+                next_step="在数据中心重新准备分析数据。",
             )
         try:
             parquet = pq.ParquetFile(processed_path)  # type: ignore[no-untyped-call]
@@ -211,9 +211,9 @@ class AnalyticsService:
             raise AnalyticsError(
                 code="ANALYTICS_PARQUET_UNREADABLE",
                 title="15 分钟处理数据不可读",
-                reason="Parquet 文件存在，但无法解析其 schema。",
+                reason="15 分钟分析数据无法读取。",
                 evidence=(type(exc).__name__, manifest.preprocess_id),
-                next_step="重新生成 M2 处理产物并复核磁盘状态。",
+                next_step="在数据中心重新准备分析数据。",
             ) from exc
         missing_parquet = tuple(
             column for column in REQUIRED_COLUMNS if column not in parquet.schema_arrow.names
@@ -222,37 +222,37 @@ class AnalyticsService:
             raise AnalyticsError(
                 code="ANALYTICS_PARQUET_COLUMNS_MISSING",
                 title="15 分钟处理数据字段不兼容",
-                reason="Parquet 缺少 M3 确定性分析所需字段。",
+                reason="分析数据缺少用电分析所需字段。",
                 evidence=missing_parquet,
-                next_step="使用当前 M2 规则重新生成处理产物。",
+                next_step="在数据中心重新准备分析数据。",
             )
         split_counts = manifest.splits.get("counts")
         if not isinstance(split_counts, dict):
             raise AnalyticsError(
                 code="ANALYTICS_MANIFEST_SPLITS_INVALID",
-                title="M2 固定切分契约不完整",
-                reason="manifest 没有可验证的 train、validation、test 计数。",
+                title="分析数据不完整",
+                reason="分析数据的训练、验证和测试范围信息缺失。",
                 evidence=(manifest.preprocess_id,),
-                next_step="使用当前代码和默认配置重新生成 M2 处理产物。",
+                next_step="在数据中心重新准备分析数据。",
             )
         expected_rows = 0
         for value in split_counts.values():
             if not isinstance(value, int):
                 raise AnalyticsError(
                     code="ANALYTICS_MANIFEST_SPLITS_INVALID",
-                    title="M2 固定切分契约不完整",
-                    reason="manifest 的固定切分计数不是整数。",
+                    title="分析数据不完整",
+                    reason="分析数据的范围计数无效。",
                     evidence=(manifest.preprocess_id,),
-                    next_step="使用当前代码和默认配置重新生成 M2 处理产物。",
+                    next_step="在数据中心重新准备分析数据。",
                 )
             expected_rows += value
         if parquet.metadata.num_rows != expected_rows:
             raise AnalyticsError(
                 code="ANALYTICS_PARQUET_ROW_COUNT_MISMATCH",
                 title="15 分钟处理数据身份不一致",
-                reason="Parquet 行数与 manifest 固定切分计数不一致。",
+                reason="分析数据行数与范围计数不一致。",
                 evidence=(f"manifest={expected_rows}", f"parquet={parquet.metadata.num_rows}"),
-                next_step="重新生成 M2 处理产物；不要继续使用不一致数据。",
+                next_step="在数据中心重新准备分析数据。",
             )
         return manifest, processed_path
 

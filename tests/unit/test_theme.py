@@ -41,6 +41,8 @@ def test_theme_contains_required_tokens_and_accessibility_modes() -> None:
     assert '[data-testid="stMetric"]' in THEME_CSS
     assert '[data-testid="stDataFrame"]' in THEME_CSS
     assert 'button[data-testid="stBaseButton-primary"]' in THEME_CSS
+    assert ".pi-connection-bars" in THEME_CSS
+    assert "pi-connection-pulse" in THEME_CSS
 
 
 def test_theme_is_initialized_only_from_the_streamlit_entrypoint() -> None:

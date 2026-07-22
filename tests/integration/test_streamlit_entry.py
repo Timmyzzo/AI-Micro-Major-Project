@@ -34,6 +34,7 @@ def test_streamlit_default_page_executes_without_exception(monkeypatch: object) 
     assert not app.exception
     assert sum("powerinsight-theme" in item.value for item in app.markdown) == 1
     assert any("智电洞察" in item.value for item in app.sidebar.markdown)
-    assert any("M4 · 模型闭环" in item.value for item in app.sidebar.markdown)
-    assert any("模型与智能能力" in item.value for item in app.markdown)
+    assert any("电力数据智能分析" in item.value for item in app.sidebar.markdown)
+    assert any("大模型 API" in item.value for item in app.markdown)
+    assert all("M4" not in item.value for item in app.sidebar.markdown)
     assert not app.warning

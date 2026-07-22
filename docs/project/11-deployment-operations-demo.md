@@ -2,35 +2,34 @@
 
 ## 启动
 
+先在当前 PowerShell 配置 `LLM_ENABLED=true`、`OPENAI_API_KEY`、`OPENAI_MODEL` 和需要的 `OPENAI_BASE_URL`，然后执行：
+
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start_powerinsight.ps1
 ~~~
 
-或：
+修改大模型 Key、模型或 Base URL 后，使用 `-Restart` 重启当前项目实例并重新打开浏览器：
 
 ~~~powershell
-.\.venv\Scripts\python.exe -m streamlit run app\streamlit_app.py
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\start_powerinsight.ps1 -Restart
 ~~~
+
+脚本自动选择端口并打开默认浏览器。完整说明见 [系统使用指南](15-system-usage-guide.md)。
 
 ## 推荐演示流程
 
-1. 首页查看数据、模型和环境状态；
-2. 数据中心展示固定课程 CSV、缺失证据和 15 分钟产物；
-3. 用电分析展示 KPI、趋势和周期；
-4. 负荷预测展示模型卡、预测区间和真实指标；
-5. 监测预警回放一个 96 点片段并导出 CSV；
-6. 智能建议展示本地模板；如已配置 Key，主动调用一次 API；
-7. 系统设置说明本地存储和安全边界。
+1. 首页确认四项核心功能状态，说明当前大模型型号，点击“测试 API 连接”；
+2. 数据中心说明 UCI 数据来源、时间范围、记录规模和覆盖率；
+3. 用电分析选择日期，展示 KPI、趋势、周期和分项用电；
+4. 负荷预测选择时间和三个主要模型之一，展示 24 小时预测、90% 区间和双语指标；
+5. 智能建议点击“生成智能建议”，展示大模型回复；
+6. 监测预警作为补充，回放历史负荷并导出预警 CSV；
+7. 系统设置快速展示 GPU、预测模型数量和大模型型号。
 
-## 降级
+## 展示原则
 
-- 无网络或无 Key：本地模板建议可用；
-- API 超时或失败：回退本地模板；
-- CUDA 不可用：CPU 推理；
-- 权重缺失：兼容朴素默认模型仍可推理；
-- 全部模型不兼容：历史分析仍可用，预测明确阻断；
-- 数据产物缺失：引导用户在数据中心处理固定内置数据。
-
-## 不演示
-
-上传数据、字段映射、优化调度、完整智能报告、HTML、REST、云部署或设备控制。
+- 不解释开发阶段编号和内部产物名称；
+- 不展示哈希、模型运行 ID、缓存路径或配置指纹；
+- 不在主流程中运行数据校验或模型训练；
+- 页面指标以中文名称为主，保留常见英文缩写；
+- 大模型测试和建议必须由用户点击触发，并显示成功或失败状态。

@@ -17,6 +17,10 @@ def make_runtime_context(tmp_path: Path) -> RuntimeContext:
             "app_data_dir": "data",
             "app_artifact_dir": "artifacts",
             "app_database_path": "artifacts/test.db",
+            "llm_enabled": False,
+            "openai_api_key": None,
+            "openai_base_url": None,
+            "openai_model": None,
             "data": {"builtin_path": "docs/input.csv"},
         }
     )

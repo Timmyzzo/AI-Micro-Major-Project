@@ -1,4 +1,4 @@
-"""M5 alert service over verified M2 data and M4 forecast results."""
+"""Alert service over prepared data and forecast results."""
 
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from powerinsight.services.runtime import RuntimeContext
 
 @dataclass(frozen=True)
 class AlertEvaluation:
-    """All M5 deterministic alerts and threshold provenance for one forecast replay."""
+    """Deterministic alerts and threshold provenance for one forecast replay."""
 
     alerts: tuple[Alert, ...]
     thresholds: RuleThresholds
@@ -40,10 +40,10 @@ class AlertService:
         self._context = context
 
     def evaluate(self, result: ForecastResult) -> AlertEvaluation:
-        """Evaluate three alert classes against a compatible M4 replay result."""
+        """Evaluate three alert classes against a compatible replay result."""
         state = DataService(self._context).inspect_builtin_state()
         if state.manifest is None or not state.processed_exists:
-            raise ValueError("verified M2 manifest and processed data are required")
+            raise ValueError("prepared analysis data is required")
         manifest = state.manifest
         processed_path = (
             self._context.paths.data_dir

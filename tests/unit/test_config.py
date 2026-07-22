@@ -16,7 +16,7 @@ def test_default_settings_load_without_api_key() -> None:
     assert settings.app_env == "development"
     assert settings.device == "auto"
     assert settings.openai_api_key is None
-    assert settings.llm_enabled is False
+    assert settings.llm_enabled is True
     assert settings.llm_configured is False
     assert settings.data.builtin_path == Path("docs/household_power_consumption.csv")
     assert settings.config_sources == ("safe defaults", "configs/default.yaml")
@@ -79,14 +79,17 @@ def test_api_key_is_excluded_from_repr_dump_and_safe_summary() -> None:
     assert "openai_api_key" not in settings.model_dump()
 
 
-def test_enabled_llm_requires_key_and_model() -> None:
-    with pytest.raises(ConfigurationError, match="requires OPENAI_API_KEY"):
-        load_settings(
-            environment={
-                "LLM_ENABLED": "true",
-                "OPENAI_MODEL": "example-model",
-            }
-        )
+def test_enabled_llm_allows_page_start_before_credentials_are_complete() -> None:
+    settings = load_settings(
+        environment={
+            "LLM_ENABLED": "true",
+            "OPENAI_MODEL": "example-model",
+        }
+    )
+
+    assert settings.llm_enabled is True
+    assert settings.llm_configured is False
+    assert settings.openai_model == "example-model"
 
 
 def test_yaml_rejects_api_key(tmp_path: Path) -> None:
